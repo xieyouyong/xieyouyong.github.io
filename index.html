@@ -1,93 +1,230 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>我的个人网站</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>我的个人主页</title>
     <style>
-        /* 这里是 CSS 样式，负责让网页变好看 */
+        /* ===== 全局重置 & 字体 ===== */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', 'PingFang SC', Roboto, system-ui, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            /* 背景渐变色，从蓝色到紫色 */
             min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            margin: 0;
-            padding: 20px;
+            padding: 30px 20px;
         }
-        .card {
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(10px);
-            padding: 60px 50px;
-            border-radius: 30px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            text-align: center;
-            max-width: 600px;
+
+        /* ===== 主容器（毛玻璃效果） ===== */
+        .container {
+            max-width: 1100px;
             width: 100%;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-radius: 40px;
+            padding: 48px 44px 40px;
+            box-shadow: 0 25px 70px rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.4);
             transition: transform 0.3s ease;
         }
-        .card:hover {
-            transform: scale(1.02);
+
+        .container:hover {
+            transform: scale(1.005);
         }
-        h1 {
-            font-size: 48px;
-            color: #333;
-            margin-bottom: 10px;
+
+        /* ===== 顶部标题 ===== */
+        .site-header {
+            text-align: center;
+            margin-bottom: 40px;
+            border-bottom: 2px dashed rgba(118, 75, 162, 0.2);
+            padding-bottom: 24px;
         }
-        h1 span {
+
+        .site-header h1 {
+            font-size: 42px;
+            color: #1e293b;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .site-header h1 span {
             color: #764ba2;
         }
-        p {
-            font-size: 18px;
-            color: #555;
-            line-height: 1.8;
+
+        .site-header p {
+            color: #64748b;
+            font-size: 17px;
+            margin-top: 6px;
+        }
+
+        /* ===== 三块卡片网格 ===== */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 28px;
             margin-bottom: 20px;
         }
+
+        .card-block {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(4px);
+            border-radius: 24px;
+            padding: 28px 22px 32px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            transition: all 0.25s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-block:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.08);
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .card-block .icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+
+        .card-block h2 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #0f2c3d;
+            margin-bottom: 12px;
+            letter-spacing: -0.3px;
+        }
+
+        .card-block p {
+            color: #475569;
+            font-size: 15px;
+            line-height: 1.7;
+            margin-bottom: 20px;
+            flex: 1;
+        }
+
+        /* ===== 卡片内的按钮 ===== */
         .btn {
             display: inline-block;
-            padding: 12px 40px;
+            padding: 10px 24px;
             background: #764ba2;
             color: #fff;
             border: none;
-            border-radius: 50px;
-            font-size: 18px;
+            border-radius: 40px;
+            font-size: 15px;
+            font-weight: 600;
             text-decoration: none;
-            transition: 0.3s;
-            box-shadow: 0 5px 15px rgba(118, 75, 162, 0.4);
+            text-align: center;
+            transition: 0.3s ease;
+            box-shadow: 0 4px 14px rgba(118, 75, 162, 0.25);
+            align-self: flex-start;
+            margin-top: auto;
         }
+
         .btn:hover {
             background: #667eea;
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
         }
+
+        /* 每个卡片可以有不同的主题色（可选） */
+        .card-block:nth-child(2) .btn {
+            background: #0ea5e9;
+            box-shadow: 0 4px 14px rgba(14, 165, 233, 0.3);
+        }
+        .card-block:nth-child(2) .btn:hover {
+            background: #0284c7;
+        }
+
+        .card-block:nth-child(3) .btn {
+            background: #f59e0b;
+            box-shadow: 0 4px 14px rgba(245, 158, 11, 0.3);
+        }
+        .card-block:nth-child(3) .btn:hover {
+            background: #d97706;
+        }
+
+        /* ===== 页脚 ===== */
         .footer {
-            margin-top: 30px;
+            margin-top: 36px;
+            text-align: center;
             font-size: 14px;
-            color: #999;
+            color: #94a3b8;
+            border-top: 1px solid rgba(148, 163, 184, 0.2);
+            padding-top: 22px;
+        }
+
+        /* ===== 响应式 ===== */
+        @media (max-width: 640px) {
+            .container {
+                padding: 24px 16px 28px;
+            }
+            .site-header h1 {
+                font-size: 30px;
+            }
+            .grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            .card-block {
+                padding: 22px 18px 26px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h1>你好, <span>世界</span> 👋</h1>
-        <p>
-            这是我的第一个个人网站。<br>
-            我正在学习如何建设一个漂亮的页面！
-        </p>
-        <div class="btn-group">
-            <a href="#" class="btn">了解更多</a>
-            <a href="tool/24point.html" class="btn">🧮 24点计算</a>
+
+    <div class="container">
+        <!-- 头部 -->
+        <div class="site-header">
+            <h1>👋 你好，<span>世界</span></h1>
+            <p>这里是 <strong>我的个人主页</strong> · 欢迎探索</p>
         </div>
+
+        <!-- 三大功能块 -->
+        <div class="grid">
+            <!-- 块1：个人简介 -->
+            <div class="card-block">
+                <div class="icon">🧑‍💻</div>
+                <h2>个人简介</h2>
+                <p>关于我，我的经历、兴趣与正在做的事。这里将展示一个真实的我。</p>
+                <!-- 等你的 about.html 做好了，把 # 改成 about.html -->
+                <a href="#" class="btn">📖 了解详情</a>
+            </div>
+
+            <!-- 块2：尤溪县方言 -->
+            <div class="card-block">
+                <div class="icon">🗣️</div>
+                <h2>尤溪县方言</h2>
+                <p>探索尤溪方言的魅力，记录乡音、俗语与文化传承。</p>
+                <!-- 等你的 youxi.html 做好了，把 # 改成 youxi.html -->
+                <a href="#" class="btn">🔊 听听乡音</a>
+            </div>
+
+            <!-- 块3：其他工具箱（包含 24 点） -->
+            <div class="card-block">
+                <div class="icon">🧰</div>
+                <h2>其他工具箱</h2>
+                <p>一些有趣实用的小工具。比如 24 点计算器，挑战你的算术头脑！</p>
+                <!-- 这里已经帮你链接到 tool/24point.html 了 -->
+                <a href="tool/24point.html" class="btn">🧮 24点计算</a>
+            </div>
+        </div>
+
+        <!-- 页脚 -->
         <div class="footer">
-            © 2026 我的小站
+            © 2026 我的小站 · 用 ❤️ 和 代码 搭建
         </div>
     </div>
+
 </body>
 </html>
