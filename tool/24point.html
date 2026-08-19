@@ -632,14 +632,6 @@
 
             // 输入框自动跳转 & 选中
             numInputs.forEach((inp, idx) => {
-                inp.addEventListener('input', () => {
-                    if (inp.value.length >= 1 && idx < numInputs.length - 1) {
-                        const lastChar = inp.value[inp.value.length - 1];
-                        if (lastChar !== '-' && lastChar !== '.') {
-                            numInputs[idx + 1].focus();
-                        }
-                    }
-                });
                 inp.addEventListener('focus', () => {
                     inp.select();
                 });
