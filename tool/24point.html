@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>24点计算器 · 所有解法</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'PingFang SC', Roboto, system-ui, sans-serif;
+            background: linear-gradient(145deg, #f6f9fc 0%, #e8f0f5 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            border-radius: 32px;
+            padding: 40px 44px 48px;
+            max-width: 700px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 20, 40, 0.12), 0 8px 24px rgba(0, 20, 40, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            transition: all 0.2s ease;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #0b2a3e;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 6px;
+        }
+
+        .subtitle {
+            color: #4a6a7e;
+            font-size: 15px;
+            font-weight: 400;
+            margin-bottom: 28px;
+            border-left: 4px solid #3b8fc2;
+            padding-left: 14px;
+            background: rgba(59, 143, 194, 0.06);
+            border-radius: 0 8px 8px 0;
+        }
+
+        .input-area {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+        }
+
+        .input-group {
+            flex: 1 1 60px;
+            min-width: 50px;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #2a4b5e;
+            margin-bottom: 4px;
+            letter-spacing: 0.3px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px 6px;
+            border: 2px solid #dce6ed;
+            border-radius: 14px;
+            font-size: 20px;
+            font-weight: 600;
+            text-align: center;
+            background: white;
+            color: #0b2a3e;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            font-family: inherit;
+            outline: none;
+        }
+
+        .input-group input:focus {
+            border-color: #3b8fc2;
+            box-shadow: 0 0 0 4px rgba(59, 143, 194, 0.15);
+        }
+
+        .input-group input::placeholder {
+            color: #b0c8d6;
+            font-weight: 400;
+            font-size: 14px;
+        }
+
+        .actions {
+            display: flex;
+            gap: 12px;
+            margin: 8px 0 24px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 28px;
+            border: none;
+            border-radius: 16px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            flex: 1 1 auto;
+            min-width: 100px;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background: #1a4b6d;
+            color: white;
+            box-shadow: 0 4px 14px rgba(26, 75, 109, 0.25);
+        }
+
+        .btn-primary:hover {
+            background: #0f3a55;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(26, 75, 109, 0.3);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0px);
+            box-shadow: 0 2px 8px rgba(26, 75, 109, 0.2);
+        }
+
+        .btn-secondary {
+            background: #eaf0f5;
+            color: #1a4b6d;
+        }
+
+        .btn-secondary:hover {
+            background: #dce6ed;
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: #f3e2e2;
+            color: #a13d3d;
+        }
+
+        .btn-danger:hover {
+            background: #eccfcf;
+            transform: translateY(-2px);
+        }
+
+        .result-area {
+            background: #f0f6fb;
+            border-radius: 18px;
+            padding: 18px 22px;
+            min-height: 80px;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            border: 1px solid rgba(59, 143, 194, 0.12);
+            transition: all 0.3s ease;
+            margin-top: 4px;
+            max-height: 260px;
+            overflow-y: auto;
+        }
+
+        .result-area .result-text {
+            font-size: 18px;
+            font-weight: 500;
+            color: #0b2a3e;
+            word-break: break-all;
+            text-align: left;
+            line-height: 1.6;
+            width: 100%;
+        }
+
+        .result-area .result-text .highlight {
+            color: #1a7a4b;
+            font-weight: 700;
+        }
+
+        .result-area .result-text .error {
+            color: #b13e3e;
+            font-weight: 500;
+        }
+
+        .result-area .result-text .emoji {
+            font-size: 22px;
+            margin-right: 8px;
+        }
+
+        .result-area .result-text .solution-item {
+            display: block;
+            padding: 2px 0;
+            border-bottom: 1px dashed #dce6ed;
+        }
+
+        .result-area .result-text .solution-item:last-child {
+            border-bottom: none;
+        }
+
+        .footer {
+            margin-top: 20px;
+            font-size: 13px;
+            color: #7a9aaa;
+            text-align: center;
+            letter-spacing: 0.2px;
+        }
+
+        .footer kbd {
+            background: #eaf0f5;
+            padding: 2px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #1a4b6d;
+            border: 1px solid #d0dce6;
+        }
+
+        /* 历史记录 */
+        .history {
+            margin-top: 20px;
+            border-top: 1px solid #dce6ed;
+            padding-top: 16px;
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .history-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #4a6a7e;
+            letter-spacing: 0.5px;
+        }
+
+        .history-clear-btn {
+            background: none;
+            border: none;
+            color: #b13e3e;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 4px 12px;
+            border-radius: 12px;
+            background: rgba(177, 62, 62, 0.08);
+            transition: background 0.2s;
+        }
+
+        .history-clear-btn:hover {
+            background: rgba(177, 62, 62, 0.18);
+        }
+
+        .history-item {
+            font-size: 14px;
+            color: #1a3b4e;
+            padding: 6px 0;
+            border-bottom: 1px dashed #e8eef4;
+            font-family: 'JetBrains Mono', 'Consolas', monospace;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px 12px;
+        }
+
+        .history-item .h-nums {
+            color: #4a6a7e;
+            font-weight: 500;
+            min-width: 80px;
+        }
+
+        .history-item .h-exprs {
+            color: #1a7a4b;
+            font-weight: 600;
+            word-break: break-all;
+            flex: 1;
+        }
+
+        .history-empty {
+            color: #b0c8d6;
+            font-size: 13px;
+            font-style: italic;
+        }
+
+        @media (max-width: 500px) {
+            .container {
+                padding: 24px 18px 32px;
+            }
+            h1 {
+                font-size: 22px;
+            }
+            .input-group input {
+                font-size: 17px;
+                padding: 10px 4px;
+            }
+            .btn {
+                padding: 10px 16px;
+                font-size: 14px;
+                min-width: 70px;
+            }
+            .result-area .result-text {
+                font-size: 16px;
+            }
+            .history-item {
+                font-size: 12px;
+            }
+        }
+
+        /* spinner */
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container" role="main">
+        <h1>🧮 24点 · 所有解法</h1>
+        <div class="subtitle">输入4个数字 · 用 + − × ÷ 和括号 · 列出全部解</div>
+
+        <div class="input-area" id="inputArea">
+            <div class="input-group">
+                <label for="num1">①</label>
+                <input type="text" id="num1" placeholder="3" inputmode="decimal" autofocus>
+            </div>
+            <div class="input-group">
+                <label for="num2">②</label>
+                <input type="text" id="num2" placeholder="3" inputmode="decimal">
+            </div>
+            <div class="input-group">
+                <label for="num3">③</label>
+                <input type="text" id="num3" placeholder="8" inputmode="decimal">
+            </div>
+            <div class="input-group">
+                <label for="num4">④</label>
+                <input type="text" id="num4" placeholder="8" inputmode="decimal">
+            </div>
+        </div>
+
+        <div class="actions">
+            <button class="btn btn-primary" id="calcBtn">🎯 计算</button>
+            <button class="btn btn-secondary" id="clearBtn">↺ 清空</button>
+        </div>
+
+        <div class="result-area" id="resultArea">
+            <div class="result-text" id="resultText">
+                <span style="color: #8aacbe;">输入数字，点击「计算」</span>
+            </div>
+        </div>
+
+        <div class="history" id="historyContainer">
+            <div class="history-header">
+                <div class="history-title">📋 历史记录</div>
+                <button class="history-clear-btn" id="clearHistoryBtn">🗑️ 清除全部</button>
+            </div>
+            <div id="historyList">
+                <div class="history-empty">暂无记录</div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <kbd>Enter</kbd> 快速计算 · <kbd>Esc</kbd> 清空输入
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            'use strict';
+
+            // ---------- DOM 引用 ----------
+            const numInputs = [
+                document.getElementById('num1'),
+                document.getElementById('num2'),
+                document.getElementById('num3'),
+                document.getElementById('num4'),
+            ];
+            const calcBtn = document.getElementById('calcBtn');
+            const clearBtn = document.getElementById('clearBtn');
+            const resultText = document.getElementById('resultText');
+            const historyList = document.getElementById('historyList');
+            const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+
+            // ---------- 核心求解器（返回所有解） ----------
+            function solveAll(nums) {
+                const EPS = 1e-9;
+                const TARGET = 24;
+                const solutions = new Set(); // 用于去重
+
+                // 将数字转为 (值, 表达式) 元组
+                function toItems(arr) {
+                    return arr.map(n => [Number(n), String(n)]);
+                }
+
+                function dfs(items) {
+                    if (items.length === 1) {
+                        const [val, expr] = items[0];
+                        if (Math.abs(val - TARGET) < EPS) {
+                            solutions.add(expr);
+                        }
+                        return;
+                    }
+
+                    const n = items.length;
+                    for (let i = 0; i < n; i++) {
+                        for (let j = 0; j < n; j++) {
+                            if (i === j) continue;
+                            const [aVal, aExpr] = items[i];
+                            const [bVal, bExpr] = items[j];
+                            const rest = [];
+                            for (let k = 0; k < n; k++) {
+                                if (k !== i && k !== j) rest.push(items[k]);
+                            }
+
+                            // 运算组合：+, -, *, / (两种顺序)
+                            const ops = [
+                                { val: aVal + bVal, expr: `(${aExpr}+${bExpr})` },
+                                { val: aVal - bVal, expr: `(${aExpr}-${bExpr})` },
+                                { val: aVal * bVal, expr: `(${aExpr}×${bExpr})` },
+                            ];
+                            if (Math.abs(bVal) > EPS) {
+                                ops.push({ val: aVal / bVal, expr: `(${aExpr}÷${bExpr})` });
+                            }
+                            // 反向减法、反向除法已经包含在有序对中（i,j 遍历所有顺序）
+
+                            for (const op of ops) {
+                                const newItems = [...rest, [op.val, op.expr]];
+                                dfs(newItems);
+                            }
+                        }
+                    }
+                }
+
+                // 验证数字有效性
+                const validNums = [];
+                for (const n of nums) {
+                    const v = parseFloat(n);
+                    if (!isNaN(v) && isFinite(v)) {
+                        validNums.push(v);
+                    } else {
+                        return null;
+                    }
+                }
+                if (validNums.length !== 4) return null;
+
+                const items = toItems(validNums);
+                dfs(items);
+
+                // 将 Set 转为数组，并去除外层多余的括号（美化）
+                const result = Array.from(solutions);
+                // 对每个表达式进行美化（去最外层括号）
+                const beautified = result.map(expr => {
+                    let s = expr;
+                    if (s.startsWith('(') && s.endsWith(')')) {
+                        let depth = 0;
+                        let match = true;
+                        for (let i = 0; i < s.length; i++) {
+                            if (s[i] === '(') depth++;
+                            else if (s[i] === ')') depth--;
+                            if (depth === 0 && i < s.length - 1) {
+                                match = false;
+                                break;
+                            }
+                        }
+                        if (match) {
+                            s = s.slice(1, -1);
+                        }
+                    }
+                    return s;
+                });
+                // 去重（因为美化后可能产生相同字符串）
+                return [...new Set(beautified)];
+            }
+
+            // ---------- UI 逻辑 ----------
+            function getInputNumbers() {
+                return numInputs.map(inp => inp.value.trim());
+            }
+
+            function setInputNumbers(values) {
+                values.forEach((v, i) => {
+                    if (i < numInputs.length) {
+                        numInputs[i].value = v;
+                    }
+                });
+            }
+
+            function clearInputs() {
+                numInputs.forEach(inp => (inp.value = ''));
+                numInputs[0].focus();
+            }
+
+            function showResult(message, isSuccess = false, isError = false) {
+                if (isError) {
+                    resultText.innerHTML = `<span class="error">⚠️ ${message}</span>`;
+                } else if (isSuccess) {
+                    resultText.innerHTML = `<span class="emoji">🎉</span> <span class="highlight">${message}</span>`;
+                } else {
+                    resultText.innerHTML = `<span style="color:#8aacbe;">${message}</span>`;
+                }
+            }
+
+            function addHistory(nums, solutions) {
+                const div = document.createElement('div');
+                div.className = 'history-item';
+                const numsStr = nums.map(n => String(n).trim()).join('  ');
+                // 如果解太多，只显示前5个，后加“等”
+                let displayExprs = solutions.slice(0, 5).join('  ;  ');
+                if (solutions.length > 5) {
+                    displayExprs += `  …… 等${solutions.length}种`;
+                }
+                div.innerHTML = `
+                    <span class="h-nums">${numsStr}</span>
+                    <span class="h-exprs">${displayExprs}</span>
+                `;
+                const firstChild = historyList.firstChild;
+                if (firstChild && firstChild.className === 'history-empty') {
+                    historyList.innerHTML = '';
+                }
+                historyList.prepend(div);
+                // 最多保留 30 条
+                while (historyList.children.length > 30) {
+                    historyList.removeChild(historyList.lastChild);
+                }
+            }
+
+            function clearHistory() {
+                historyList.innerHTML = `<div class="history-empty">暂无记录</div>`;
+            }
+
+            function handleCalculate() {
+                const raw = getInputNumbers();
+                const hasEmpty = raw.some(s => s === '');
+                if (hasEmpty) {
+                    showResult('请完整输入 4 个数字', false, true);
+                    return;
+                }
+
+                const nums = raw.map(s => parseFloat(s));
+                const invalid = nums.some(n => isNaN(n) || !isFinite(n));
+                if (invalid) {
+                    showResult('请输入有效的数字', false, true);
+                    return;
+                }
+
+                calcBtn.disabled = true;
+                calcBtn.innerHTML = '<span class="spinner"></span> 计算中';
+
+                setTimeout(() => {
+                    try {
+                        const solutions = solveAll(nums);
+                        if (solutions && solutions.length > 0) {
+                            // 显示所有解
+                            let html = `<span class="emoji">🎉</span> 找到 <strong>${solutions.length}</strong> 种解法：<br>`;
+                            solutions.forEach((expr, idx) => {
+                                html += `<span class="solution-item">${idx+1}. ${expr} = 24</span>`;
+                            });
+                            resultText.innerHTML = html;
+                            // 保存历史（存所有解）
+                            addHistory(raw, solutions);
+                        } else {
+                            showResult('😔 这组数字无解，换一组试试吧', false, false);
+                        }
+                    } catch (e) {
+                        showResult('计算过程中出现错误，请重试', false, true);
+                        console.error(e);
+                    } finally {
+                        calcBtn.disabled = false;
+                        calcBtn.innerHTML = '🎯 计算';
+                    }
+                }, 50);
+            }
+
+            // ---------- 事件绑定 ----------
+            calcBtn.addEventListener('click', handleCalculate);
+
+            clearBtn.addEventListener('click', () => {
+                clearInputs();
+                showResult('输入数字，点击「计算」', false, false);
+            });
+
+            clearHistoryBtn.addEventListener('click', clearHistory);
+
+            // Enter 键触发计算
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    const active = document.activeElement;
+                    if (active && numInputs.includes(active)) {
+                        e.preventDefault();
+                        handleCalculate();
+                    }
+                }
+                if (e.key === 'Escape') {
+                    clearInputs();
+                    showResult('输入数字，点击「计算」', false, false);
+                }
+            });
+
+            // 输入框自动跳转 & 选中
+            numInputs.forEach((inp, idx) => {
+                inp.addEventListener('input', () => {
+                    if (inp.value.length >= 1 && idx < numInputs.length - 1) {
+                        const lastChar = inp.value[inp.value.length - 1];
+                        if (lastChar !== '-' && lastChar !== '.') {
+                            numInputs[idx + 1].focus();
+                        }
+                    }
+                });
+                inp.addEventListener('focus', () => {
+                    inp.select();
+                });
+            });
+
+            // Ctrl+Enter 快速计算
+            document.addEventListener('keydown', (e) => {
+                if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                    e.preventDefault();
+                    handleCalculate();
+                }
+            });
+
+            // ---------- 初始示例 ----------
+            setInputNumbers(['3', '3', '8', '8']);
+            showResult('试试点击「计算」或按 Enter', false, false);
+            numInputs[0].focus();
+
+        })();
+    </script>
+
+</body>
+</html>
