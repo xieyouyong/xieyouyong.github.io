@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>谢有涌 · 个人主页</title>
+    <style>
+        /* 全局重置 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'PingFang SC', Roboto, 'Helvetica Neue', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px 20px;
+            background: linear-gradient(135deg, #f6d5f7 0%, #fbe9d7 100%);
+            /* 柔和粉紫渐变背景，漂亮且护眼 */
+        }
+
+        /* 主卡片 – 毛玻璃效果 */
+        .card {
+            max-width: 900px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            border-radius: 48px;
+            padding: 48px 52px 42px;
+            box-shadow: 0 30px 70px rgba(0, 0, 0, 0.12), 0 10px 30px rgba(0, 0, 0, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            transition: transform 0.25s ease;
+        }
+
+        .card:hover {
+            transform: scale(1.003);
+        }
+
+        /* 主标题 */
+        .main-title {
+            font-size: 38px;
+            font-weight: 700;
+            color: #2d1b3d;
+            letter-spacing: 1px;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .main-title small {
+            font-size: 18px;
+            font-weight: 400;
+            color: #6b4f7a;
+            letter-spacing: 0;
+        }
+
+        /* 个人信息条 – 用 flex 换行 */
+        .info-bar {
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 40px;
+            padding: 14px 22px;
+            margin: 12px 0 28px 0;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 16px 30px;
+            font-size: 15px;
+            color: #2d1b3d;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(4px);
+        }
+
+        .info-bar .item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .info-bar .item .label {
+            font-weight: 500;
+            color: #5d3d6e;
+        }
+
+        .info-bar .item .value {
+            font-weight: 500;
+            color: #1f1129;
+        }
+
+        .info-bar .divider {
+            color: #b89ac7;
+            font-weight: 300;
+        }
+
+        /* 分割装饰线 */
+        .section-divider {
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #c9b0d6, transparent);
+            margin: 28px 0 24px 0;
+            opacity: 0.4;
+        }
+
+        /* 一级标题 */
+        .h1-section {
+            font-size: 26px;
+            font-weight: 700;
+            color: #2d1b3d;
+            margin-top: 8px;
+            margin-bottom: 16px;
+            padding-left: 4px;
+            border-left: 6px solid #a67cb8;
+            padding-left: 16px;
+            letter-spacing: 0.3px;
+        }
+
+        /* 二级标题（用于学术经历下的子项） */
+        .h2-section {
+            font-size: 20px;
+            font-weight: 600;
+            color: #3f2a4f;
+            margin-top: 18px;
+            margin-bottom: 8px;
+            padding-left: 6px;
+            border-bottom: 1px dashed #dac3e3;
+            padding-bottom: 4px;
+        }
+
+        /* 教育背景条目 */
+        .edu-item {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: baseline;
+            gap: 6px 16px;
+            padding: 10px 0 8px 12px;
+            border-bottom: 1px solid rgba(200, 180, 210, 0.2);
+        }
+
+        .edu-item .time {
+            font-weight: 600;
+            color: #4d2f5e;
+            min-width: 160px;
+        }
+
+        .edu-item .school {
+            font-weight: 600;
+            color: #1f1129;
+        }
+
+        .edu-item .major {
+            color: #3f2a4f;
+        }
+
+        .edu-item .degree {
+            background: #e7dcee;
+            padding: 2px 14px;
+            border-radius: 30px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #4d2f5e;
+        }
+
+        .edu-detail {
+            margin: 6px 0 8px 12px;
+            padding-left: 20px;
+            color: #3a2a44;
+            font-size: 15px;
+            line-height: 1.7;
+            border-left: 3px solid #cfbadd;
+        }
+
+        .edu-detail strong {
+            color: #2d1b3d;
+        }
+
+        /* 学术经历 – 空的 placeholder 样式 */
+        .placeholder-text {
+            color: #9a85a8;
+            font-style: italic;
+            padding: 12px 0 6px 12px;
+            font-size: 15px;
+            letter-spacing: 0.2px;
+        }
+
+        /* 统一列表样式 (用于会议、专利等，虽然暂时空) */
+        .empty-note {
+            color: #b09bbd;
+            font-style: italic;
+            padding: 6px 0 6px 12px;
+            font-size: 14px;
+        }
+
+        /* 底部返回链接 */
+        .back-link {
+            margin-top: 34px;
+            padding-top: 18px;
+            border-top: 1px solid rgba(200, 180, 210, 0.25);
+            text-align: center;
+        }
+
+        .back-link a {
+            color: #6b4f7a;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 15px;
+            padding: 8px 28px;
+            border-radius: 40px;
+            background: rgba(255, 255, 255, 0.5);
+            transition: 0.2s;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+        }
+
+        .back-link a:hover {
+            background: rgba(255, 255, 255, 0.8);
+            color: #2d1b3d;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+        }
+
+        /* 让复制更友好（所有文本可选中） */
+        .card * {
+            user-select: text;
+        }
+
+        /* 响应式 */
+        @media (max-width: 640px) {
+            .card {
+                padding: 28px 18px 28px;
+                border-radius: 32px;
+            }
+            .main-title {
+                font-size: 28px;
+                flex-wrap: wrap;
+            }
+            .main-title small {
+                font-size: 16px;
+            }
+            .info-bar {
+                font-size: 14px;
+                gap: 10px 18px;
+                padding: 12px 16px;
+            }
+            .info-bar .divider {
+                display: none;
+            }
+            .h1-section {
+                font-size: 22px;
+                padding-left: 12px;
+            }
+            .edu-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 4px;
+            }
+            .edu-item .time {
+                min-width: unset;
+            }
+            .edu-detail {
+                padding-left: 12px;
+                font-size: 14px;
+            }
+            .back-link a {
+                display: inline-block;
+                width: 100%;
+            }
+        }
+
+        /* 打印优化，保持清晰 */
+        @media print {
+            body {
+                background: white;
+                padding: 20px;
+            }
+            .card {
+                box-shadow: none;
+                border: 1px solid #ddd;
+                backdrop-filter: none;
+                background: white;
+            }
+            .back-link {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+
+        <!-- 标题 -->
+        <div class="main-title">
+            谢有涌的个人主页
+            <small>· 欢迎</small>
+        </div>
+
+        <!-- 个人信息条 -->
+        <div class="info-bar">
+            <span class="item">
+                <span class="label">🎂 出生年月</span>
+                <span class="value">1998.09</span>
+            </span>
+            <span class="divider">|</span>
+            <span class="item">
+                <span class="label">📍 籍贯</span>
+                <span class="value">福建省三明市</span>
+            </span>
+            <span class="divider">|</span>
+            <span class="item">
+                <span class="label">📧 邮箱</span>
+                <span class="value">xieyy@smail.nju.edu.com</span>
+            </span>
+            <span class="divider">|</span>
+            <span class="item">
+                <span class="label">📞 电话</span>
+                <span class="value">18851901688</span>
+            </span>
+        </div>
+
+        <!-- ========== 教育背景 ========== -->
+        <h1 class="h1-section">🎓 教育背景</h1>
+
+        <div class="edu-item">
+            <span class="time">2021.09 — 至今</span>
+            <span class="school">南京大学</span>
+            <span class="major">大气科学</span>
+            <span class="degree">硕博连读</span>
+            <span style="color:#5d3d6e; font-size:14px; margin-left:4px;">（预计 2027 年毕业）</span>
+        </div>
+
+        <div class="edu-item">
+            <span class="time">2017.09 — 2021.07</span>
+            <span class="school">南京信息工程大学</span>
+            <span class="major">大气科学</span>
+            <span class="degree">学士</span>
+        </div>
+
+        <div class="edu-detail">
+            <strong>研究方向：</strong>中尺度灾害性天气模拟<br />
+            <strong>导师：</strong>袁慧玲，长江学者特聘教授，中尺度灾害性天气教育部重点实验室副主任
+        </div>
+
+        <!-- ========== 学术经历 ========== -->
+        <h1 class="h1-section" style="margin-top: 32px;">📚 学术经历</h1>
+
+        <!-- 科研项目（二级标题） -->
+        <h2 class="h2-section">🔬 科研项目</h2>
+        <div class="placeholder-text">
+            （暂无公开项目，等待更新……）
+        </div>
+
+        <!-- 发明专利（二级标题） -->
+        <h2 class="h2-section">💡 发明专利</h2>
+        <div class="placeholder-text">
+            （暂无记录，欢迎关注……）
+        </div>
+
+        <!-- 学术会议（二级标题） -->
+        <h2 class="h2-section">🗣️ 学术会议</h2>
+        <div class="placeholder-text">
+            （暂无参会记录，敬请期待……）
+        </div>
+
+        <!-- ========== 返回主页 ========== -->
+        <div class="back-link">
+            <a href="index.html">← 返回个人主页</a>
+        </div>
+
+    </div>
+
+</body>
+</html>
