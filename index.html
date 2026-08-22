@@ -54,29 +54,95 @@
             transform: scale(1.005);
         }
 
-        /* ===== 顶部标题 ===== */
+        /* ===== 顶部标题（华丽升级版） ===== */
         .site-header {
             text-align: center;
             margin-bottom: 40px;
             border-bottom: 2px dashed rgba(118, 75, 162, 0.2);
             padding-bottom: 24px;
+            position: relative;
         }
 
-        .site-header h1 {
-            font-size: 42px;
-            color: #1e293b;
-            font-weight: 700;
-            letter-spacing: -0.5px;
+        /* 装饰光晕 */
+        .site-header::before {
+            content: '';
+            position: absolute;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, rgba(118, 75, 162, 0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
         }
 
-        .site-header h1 span {
-            color: #764ba2;
+        .main-title {
+            font-size: 52px;
+            font-weight: 800;
+            letter-spacing: 2px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 30px rgba(118, 75, 162, 0.2);
+            position: relative;
+            z-index: 1;
+            display: inline-block;
+            padding: 0 20px;
+            animation: shimmer 3s ease-in-out infinite alternate;
         }
 
-        .site-header p {
-            color: #64748b;
-            font-size: 17px;
+        /* 炫彩流动动画 */
+        @keyframes shimmer {
+            0% {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+                -webkit-background-clip: text;
+                background-clip: text;
+            }
+            50% {
+                background: linear-gradient(135deg, #f093fb 0%, #667eea 50%, #764ba2 100%);
+                -webkit-background-clip: text;
+                background-clip: text;
+            }
+            100% {
+                background: linear-gradient(135deg, #764ba2 0%, #f093fb 50%, #667eea 100%);
+                -webkit-background-clip: text;
+                background-clip: text;
+            }
+        }
+
+        /* 标题下方的装饰性小字 */
+        .sub-title {
+            font-size: 18px;
+            color: #7c5c8a;
+            margin-top: 8px;
+            letter-spacing: 6px;
+            font-weight: 300;
+            position: relative;
+            z-index: 1;
+            opacity: 0.8;
+        }
+
+        .sub-title span {
+            display: inline-block;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.6; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.05); }
+        }
+
+        /* 装饰小点 */
+        .title-decoration {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
             margin-top: 6px;
+            font-size: 20px;
+            opacity: 0.5;
         }
 
         /* ===== 三块卡片网格 ===== */
@@ -181,8 +247,13 @@
             .container {
                 padding: 24px 16px 28px;
             }
-            .site-header h1 {
-                font-size: 30px;
+            .main-title {
+                font-size: 32px;
+                letter-spacing: 1px;
+            }
+            .sub-title {
+                font-size: 14px;
+                letter-spacing: 4px;
             }
             .grid {
                 grid-template-columns: 1fr;
@@ -191,16 +262,32 @@
             .card-block {
                 padding: 22px 18px 26px;
             }
+            .title-decoration {
+                font-size: 16px;
+                gap: 8px;
+            }
         }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <!-- 头部 -->
+        <!-- 头部（标题华丽升级） -->
         <div class="site-header">
-            <!-- 修改处：将原来的“这里是 谢有涌的个人主页”改为“欢迎来到谢有涌的最尾厝” -->
-            <p><strong>欢迎来到谢有涌的最尾厝</strong></p>
+            <!-- 主标题：大号渐变 + 动画 -->
+            <h1 class="main-title">✨ 欢迎来到谢有涌的最尾厝 ✨</h1>
+            <!-- 副标题：装饰性小字 -->
+            <div class="sub-title">
+                <span>· 心之所向 · 素履以往 ·</span>
+            </div>
+            <!-- 底部装饰点 -->
+            <div class="title-decoration">
+                <span>✦</span>
+                <span>✧</span>
+                <span>✦</span>
+                <span>✧</span>
+                <span>✦</span>
+            </div>
         </div>
 
         <!-- 三大功能块 -->
