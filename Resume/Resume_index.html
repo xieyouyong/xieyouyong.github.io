@@ -3,32 +3,24 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>谢有涌 · 个人简历</title>
-    
-    <!-- 页面描述（搜索引擎结果中显示的摘要，建议 50-160 个字符） -->
+    <!-- ========== SEO 元数据（针对搜索引擎优化） ========== -->
+    <title>谢有涌 · 南京大学大气科学 · 个人简历</title>
     <meta name="description" content="谢有涌，南京大学大气科学硕博连读，研究方向为中尺度灾害性天气模拟。包含个人简历、学术成果、联系方式等。" />
-    
-    <!-- 关键词（可选，但建议保留） -->
     <meta name="keywords" content="谢有涌, 南京大学, 大气科学, 中尺度灾害性天气, 气象, 学术" />
-    
-    <!-- 告诉搜索引擎抓取并索引此页面 -->
     <meta name="robots" content="index, follow" />
-    
-    <!-- 规范 URL（告诉搜索引擎哪个是标准地址） -->
-    <link rel="canonical" href="https://xieyouyong.github.io/" />
-    
-    <!-- ===== 以下为社交媒体分享预览（Open Graph）===== -->
+    <link rel="canonical" href="https://xieyouyong.github.io/about.html" />
+    <!-- ========== Open Graph（社交媒体分享预览） ========== -->
     <meta property="og:title" content="谢有涌 · 南京大学大气科学" />
-    <meta property="og:description" content="谢有涌的个人主页，南京大学大气科学硕博连读，中尺度灾害性天气模拟方向。" />
-    <meta property="og:url" content="https://xieyouyong.github.io/" />
-    <meta property="og:type" content="website" />
-    <!-- 如果你有一张个人照片，可以放在 assets/ 文件夹里并引用 -->
+    <meta property="og:description" content="谢有涌的个人简历，南京大学大气科学硕博连读，中尺度灾害性天气模拟方向。" />
+    <meta property="og:url" content="https://xieyouyong.github.io/about.html" />
+    <meta property="og:type" content="profile" />
+    <!-- 如果有头像图片，可添加 og:image -->
     <!-- <meta property="og:image" content="https://xieyouyong.github.io/assets/profile.jpg" /> -->
-    
-    <!-- ===== Twitter 卡片（可选）===== -->
+    <!-- ========== Twitter Card ========== -->
     <meta name="twitter:card" content="summary" />
     <meta name="twitter:title" content="谢有涌 · 南京大学大气科学" />
-    <meta name="twitter:description" content="谢有涌的个人主页，大气科学硕博连读，中尺度灾害性天气模拟。" />
+    <meta name="twitter:description" content="谢有涌的个人简历，南京大学大气科学硕博连读，中尺度灾害性天气模拟方向。" />
+
     <style>
         /* ===== 全局重置 ===== */
         * {
@@ -104,7 +96,7 @@
             box-shadow: 0 8px 24px rgba(45, 27, 61, 0.3);
         }
 
-        /* ===== 个人信息条：一行两个，带复制按钮 ===== */
+        /* ===== 个人信息：一行两个 + 复制按钮 ===== */
         .info-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -159,14 +151,6 @@
             color: #2d7a4b;
         }
 
-        /* ===== 分割线 ===== */
-        .section-divider {
-            height: 2px;
-            background: linear-gradient(90deg, transparent, #c9b0d6, transparent);
-            margin: 28px 0 24px 0;
-            opacity: 0.3;
-        }
-
         /* ===== 标题 ===== */
         .h1-section {
             font-size: 26px;
@@ -191,7 +175,7 @@
             border-bottom: 1px dashed #dac3e3;
         }
 
-        /* ===== 教育背景：使用网格居中对齐 ===== */
+        /* ===== 教育背景：网格对齐 ===== */
         .edu-grid {
             display: grid;
             grid-template-columns: 160px 1fr 1fr auto;
@@ -225,17 +209,9 @@
             font-weight: 600;
             color: #4d2f5e;
             white-space: nowrap;
-        }
-
-        .edu-grid .extra {
-            color: #5d3d6e;
-            font-size: 14px;
-            white-space: nowrap;
-            grid-column: 4;
             justify-self: end;
         }
 
-        /* 导师信息单独一行 */
         .edu-detail {
             margin: 6px 0 8px 12px;
             padding-left: 20px;
@@ -277,12 +253,6 @@
             color: #3f2a4f;
         }
 
-        .list-item .conference {
-            color: #5d3d6e;
-            font-style: italic;
-        }
-
-        /* 高亮“主持” */
         .highlight-host {
             font-weight: bold;
             color: #C00000;
@@ -327,7 +297,6 @@
             font-weight: 600;
         }
 
-        /* ===== 实践实习 & 兴趣爱好 ===== */
         .practice-block {
             padding: 8px 12px;
             line-height: 1.8;
@@ -339,7 +308,6 @@
             color: #3f2a4f;
         }
 
-        /* ===== 底部返回 ===== */
         .back-link {
             margin-top: 34px;
             padding-top: 18px;
@@ -395,9 +363,8 @@
             .edu-grid .major {
                 text-align: left;
             }
-            .edu-grid .extra {
+            .edu-grid .degree {
                 justify-self: start;
-                grid-column: 1;
             }
             .h1-section {
                 font-size: 22px;
@@ -415,7 +382,6 @@
             }
         }
 
-        /* ===== 打印优化 ===== */
         @media print {
             body {
                 background: white;
@@ -427,12 +393,8 @@
                 backdrop-filter: none;
                 background: white;
             }
-            .download-btn {
-                display: none;
-            }
-            .back-link {
-                display: none;
-            }
+            .download-btn,
+            .back-link,
             .copy-btn {
                 display: none;
             }
@@ -452,25 +414,21 @@
 
         <!-- ===== 个人信息：一行两个 + 复制按钮 ===== -->
         <div class="info-grid">
-            <!-- 出生年月 -->
             <div class="info-item">
                 <span class="label">🎂 出生年月</span>
                 <span class="value" id="birth">1998.09</span>
                 <button class="copy-btn" data-target="birth" title="复制出生年月">📋</button>
             </div>
-            <!-- 籍贯 -->
             <div class="info-item">
                 <span class="label">📍 籍贯</span>
                 <span class="value" id="hometown">福建省三明市</span>
                 <button class="copy-btn" data-target="hometown" title="复制籍贯">📋</button>
             </div>
-            <!-- 邮箱 -->
             <div class="info-item">
                 <span class="label">📧 邮箱</span>
                 <span class="value" id="email">xieyy@smail.nju.edu.com</span>
                 <button class="copy-btn" data-target="email" title="复制邮箱">📋</button>
             </div>
-            <!-- 电话 -->
             <div class="info-item">
                 <span class="label">📞 电话</span>
                 <span class="value" id="phone">18851901688</span>
@@ -481,16 +439,13 @@
         <!-- ===== 教育背景 ===== -->
         <h1 class="h1-section">🎓 教育背景</h1>
 
-        <!-- 第一条：南京大学 -->
         <div class="edu-grid">
             <span class="time">2021.09 — 至今</span>
             <span class="school">南京大学</span>
             <span class="major">大气科学</span>
-            <span class="degree">硕博连读</span>
-            <span class="extra">（预计 2027 年毕业）</span>
+            <span class="degree">硕博连读（预计 2027 年毕业）</span>
         </div>
 
-        <!-- 第二条：南京信息工程大学 -->
         <div class="edu-grid">
             <span class="time">2017.09 — 2021.07</span>
             <span class="school">南京信息工程大学</span>
@@ -506,7 +461,6 @@
         <!-- ===== 学术经历 ===== -->
         <h1 class="h1-section">📚 学术经历</h1>
 
-        <!-- 科研项目 -->
         <h2 class="h2-section">🔬 科研项目</h2>
         <div class="list-item">
             <span class="title">教育部关键地球物质循环前沿科学中心“GeoX”交叉项目</span>
@@ -521,7 +475,6 @@
             <span class="detail">“西风急流不同区段对中国东部夏季降水的影响”（2019-2021），<span class="highlight-host">主持</span>。</span>
         </div>
 
-        <!-- 学术论文 -->
         <h2 class="h2-section">📄 学术论文</h2>
         <div class="list-item">
             <span class="title">Xie, Y., Yuan, H. 2024.</span>
@@ -531,14 +484,12 @@
             </span>
         </div>
 
-        <!-- 发明专利 -->
         <h2 class="h2-section">💡 发明专利</h2>
         <div class="list-item">
             <span class="title">谢有涌, 袁慧玲.</span>
             <span class="detail">一种基于可视化信息的弱天气强迫强降水事件客观识别方法. 授权专利号：ZL202510281807.5.</span>
         </div>
 
-        <!-- 学术会议 -->
         <h2 class="h2-section">🗣️ 学术会议</h2>
         <div class="list-item">
             <span class="title">谢有涌, 袁慧玲, 2025.</span>
@@ -607,19 +558,14 @@
     <script>
         (function() {
             'use strict';
-
             const copyBtns = document.querySelectorAll('.copy-btn');
-
             copyBtns.forEach(btn => {
                 btn.addEventListener('click', function(e) {
                     e.stopPropagation();
                     const targetId = this.getAttribute('data-target');
                     const valueElement = document.getElementById(targetId);
                     if (!valueElement) return;
-
                     const textToCopy = valueElement.textContent.trim();
-
-                    // 使用 modern clipboard API
                     if (navigator.clipboard && navigator.clipboard.writeText) {
                         navigator.clipboard.writeText(textToCopy).then(() => {
                             showCopiedFeedback(this);
@@ -655,7 +601,6 @@
                     btn.classList.remove('copied');
                 }, 2000);
             }
-
         })();
     </script>
 
