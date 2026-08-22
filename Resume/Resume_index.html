@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>谢有涌 · 个人简历</title>
     <style>
-        /* 全局重置 */
+        /* ===== 全局重置 ===== */
         * {
             margin: 0;
             padding: 0;
@@ -39,7 +39,7 @@
             transform: scale(1.001);
         }
 
-        /* 头部：姓名 + 下载按钮 */
+        /* ===== 头部：姓名 + 下载 ===== */
         .header {
             display: flex;
             flex-wrap: wrap;
@@ -79,44 +79,62 @@
             box-shadow: 0 8px 24px rgba(45, 27, 61, 0.3);
         }
 
-        /* 个人信息条 */
-        .info-bar {
+        /* ===== 个人信息条：一行两个，带复制按钮 ===== */
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px 30px;
             background: rgba(255, 255, 255, 0.5);
             border-radius: 40px;
             padding: 14px 22px;
             margin: 12px 0 28px 0;
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: 16px 30px;
-            font-size: 15px;
-            color: #2d1b3d;
             border: 1px solid rgba(255, 255, 255, 0.6);
             backdrop-filter: blur(4px);
         }
 
-        .info-bar .item {
+        .info-item {
             display: flex;
             align-items: center;
             gap: 6px;
+            font-size: 15px;
+            color: #2d1b3d;
+            flex-wrap: wrap;
         }
 
-        .info-bar .item .label {
+        .info-item .label {
             font-weight: 500;
             color: #5d3d6e;
         }
 
-        .info-bar .item .value {
+        .info-item .value {
             font-weight: 500;
             color: #1f1129;
+            margin-right: 4px;
         }
 
-        .info-bar .divider {
-            color: #b89ac7;
-            font-weight: 300;
+        .copy-btn {
+            background: none;
+            border: none;
+            color: #8a70a0;
+            cursor: pointer;
+            font-size: 18px;
+            padding: 0 4px;
+            transition: 0.2s;
+            line-height: 1;
+            display: inline-flex;
+            align-items: center;
         }
 
-        /* 分割线 */
+        .copy-btn:hover {
+            color: #4d2f5e;
+            transform: scale(1.15);
+        }
+
+        .copy-btn.copied {
+            color: #2d7a4b;
+        }
+
+        /* ===== 分割线 ===== */
         .section-divider {
             height: 2px;
             background: linear-gradient(90deg, transparent, #c9b0d6, transparent);
@@ -124,7 +142,7 @@
             opacity: 0.3;
         }
 
-        /* 一级标题 */
+        /* ===== 标题 ===== */
         .h1-section {
             font-size: 26px;
             font-weight: 700;
@@ -139,7 +157,6 @@
             margin-top: 0;
         }
 
-        /* 二级标题 */
         .h2-section {
             font-size: 20px;
             font-weight: 600;
@@ -149,40 +166,51 @@
             border-bottom: 1px dashed #dac3e3;
         }
 
-        /* 教育背景条目 */
-        .edu-item {
-            display: flex;
-            flex-wrap: wrap;
+        /* ===== 教育背景：使用网格居中对齐 ===== */
+        .edu-grid {
+            display: grid;
+            grid-template-columns: 160px 1fr 1fr auto;
+            gap: 6px 12px;
             align-items: baseline;
-            gap: 6px 16px;
-            padding: 10px 0 8px 12px;
+            padding: 8px 0;
             border-bottom: 1px solid rgba(200, 180, 210, 0.2);
         }
 
-        .edu-item .time {
+        .edu-grid .time {
             font-weight: 600;
             color: #4d2f5e;
-            min-width: 160px;
         }
 
-        .edu-item .school {
+        .edu-grid .school {
             font-weight: 600;
             color: #1f1129;
+            text-align: center;
         }
 
-        .edu-item .major {
+        .edu-grid .major {
             color: #3f2a4f;
+            text-align: center;
         }
 
-        .edu-item .degree {
+        .edu-grid .degree {
             background: #e7dcee;
             padding: 2px 14px;
             border-radius: 30px;
             font-size: 13px;
             font-weight: 600;
             color: #4d2f5e;
+            white-space: nowrap;
         }
 
+        .edu-grid .extra {
+            color: #5d3d6e;
+            font-size: 14px;
+            white-space: nowrap;
+            grid-column: 4;
+            justify-self: end;
+        }
+
+        /* 导师信息单独一行 */
         .edu-detail {
             margin: 6px 0 8px 12px;
             padding-left: 20px;
@@ -196,7 +224,7 @@
             color: #2d1b3d;
         }
 
-        /* 列表样式：用于项目、论文、专利、会议、荣誉等 */
+        /* ===== 列表项 ===== */
         .list-item {
             padding: 6px 0 6px 24px;
             margin-left: 6px;
@@ -229,7 +257,13 @@
             font-style: italic;
         }
 
-        /* 荣誉奖励、专业技能等使用紧凑列表 */
+        /* 高亮“主持” */
+        .highlight-host {
+            font-weight: bold;
+            color: #C00000;
+        }
+
+        /* ===== 荣誉奖励 ===== */
         .badge-list {
             display: flex;
             flex-wrap: wrap;
@@ -246,10 +280,11 @@
             border: 1px solid rgba(167, 124, 184, 0.2);
         }
 
+        /* ===== 专业技能：一行一个 ===== */
         .skill-block {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
             padding: 10px 12px;
             background: rgba(255, 255, 255, 0.3);
             border-radius: 20px;
@@ -259,6 +294,7 @@
         .skill-block .skill-item {
             font-size: 15px;
             color: #2d1b3d;
+            line-height: 1.6;
         }
 
         .skill-block .skill-item strong {
@@ -266,6 +302,7 @@
             font-weight: 600;
         }
 
+        /* ===== 实践实习 & 兴趣爱好 ===== */
         .practice-block {
             padding: 8px 12px;
             line-height: 1.8;
@@ -277,7 +314,7 @@
             color: #3f2a4f;
         }
 
-        /* 底部返回 */
+        /* ===== 底部返回 ===== */
         .back-link {
             margin-top: 34px;
             padding-top: 18px;
@@ -303,7 +340,7 @@
             box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
         }
 
-        /* 响应式 */
+        /* ===== 响应式 ===== */
         @media (max-width: 640px) {
             .container {
                 padding: 24px 16px 28px;
@@ -319,29 +356,27 @@
             .download-btn {
                 justify-content: center;
             }
-            .info-bar {
-                font-size: 13px;
-                gap: 8px 12px;
+            .info-grid {
+                grid-template-columns: 1fr;
+                gap: 8px;
                 padding: 12px 16px;
             }
-            .info-bar .divider {
-                display: none;
+            .edu-grid {
+                grid-template-columns: 1fr;
+                gap: 2px;
+                text-align: left;
+            }
+            .edu-grid .school,
+            .edu-grid .major {
+                text-align: left;
+            }
+            .edu-grid .extra {
+                justify-self: start;
+                grid-column: 1;
             }
             .h1-section {
                 font-size: 22px;
                 padding-left: 12px;
-            }
-            .edu-item {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 4px;
-            }
-            .edu-item .time {
-                min-width: unset;
-            }
-            .skill-block {
-                grid-template-columns: 1fr;
-                gap: 8px;
             }
             .badge-list {
                 gap: 6px 10px;
@@ -355,7 +390,7 @@
             }
         }
 
-        /* 打印优化 */
+        /* ===== 打印优化 ===== */
         @media print {
             body {
                 background: white;
@@ -373,13 +408,16 @@
             .back-link {
                 display: none;
             }
+            .copy-btn {
+                display: none;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
 
-        <!-- 头部：姓名 + 下载按钮 -->
+        <!-- ===== 头部 ===== -->
         <div class="header">
             <span class="name-title">谢有涌</span>
             <a href="谢有涌简历.pdf" class="download-btn" download="谢有涌简历.pdf">
@@ -387,41 +425,48 @@
             </a>
         </div>
 
-        <!-- 个人信息条 -->
-        <div class="info-bar">
-            <span class="item">
+        <!-- ===== 个人信息：一行两个 + 复制按钮 ===== -->
+        <div class="info-grid">
+            <!-- 出生年月 -->
+            <div class="info-item">
                 <span class="label">🎂 出生年月</span>
-                <span class="value">1998.09</span>
-            </span>
-            <span class="divider">|</span>
-            <span class="item">
+                <span class="value" id="birth">1998.09</span>
+                <button class="copy-btn" data-target="birth" title="复制出生年月">📋</button>
+            </div>
+            <!-- 籍贯 -->
+            <div class="info-item">
                 <span class="label">📍 籍贯</span>
-                <span class="value">福建省三明市</span>
-            </span>
-            <span class="divider">|</span>
-            <span class="item">
+                <span class="value" id="hometown">福建省三明市</span>
+                <button class="copy-btn" data-target="hometown" title="复制籍贯">📋</button>
+            </div>
+            <!-- 邮箱 -->
+            <div class="info-item">
                 <span class="label">📧 邮箱</span>
-                <span class="value">xieyy@smail.nju.edu.com</span>
-            </span>
-            <span class="divider">|</span>
-            <span class="item">
+                <span class="value" id="email">xieyy@smail.nju.edu.com</span>
+                <button class="copy-btn" data-target="email" title="复制邮箱">📋</button>
+            </div>
+            <!-- 电话 -->
+            <div class="info-item">
                 <span class="label">📞 电话</span>
-                <span class="value">18851901688</span>
-            </span>
+                <span class="value" id="phone">18851901688</span>
+                <button class="copy-btn" data-target="phone" title="复制电话">📋</button>
+            </div>
         </div>
 
-        <!-- ========== 教育背景 ========== -->
+        <!-- ===== 教育背景 ===== -->
         <h1 class="h1-section">🎓 教育背景</h1>
 
-        <div class="edu-item">
+        <!-- 第一条：南京大学 -->
+        <div class="edu-grid">
             <span class="time">2021.09 — 至今</span>
             <span class="school">南京大学</span>
             <span class="major">大气科学</span>
             <span class="degree">硕博连读</span>
-            <span style="color:#5d3d6e; font-size:14px; margin-left:4px;">（预计 2027 年毕业）</span>
+            <span class="extra">（预计 2027 年毕业）</span>
         </div>
 
-        <div class="edu-item">
+        <!-- 第二条：南京信息工程大学 -->
+        <div class="edu-grid">
             <span class="time">2017.09 — 2021.07</span>
             <span class="school">南京信息工程大学</span>
             <span class="major">大气科学</span>
@@ -433,14 +478,14 @@
             <strong>导师：</strong>袁慧玲，长江学者特聘教授，中尺度灾害性天气教育部重点实验室副主任
         </div>
 
-        <!-- ========== 学术经历 ========== -->
+        <!-- ===== 学术经历 ===== -->
         <h1 class="h1-section">📚 学术经历</h1>
 
         <!-- 科研项目 -->
         <h2 class="h2-section">🔬 科研项目</h2>
         <div class="list-item">
             <span class="title">教育部关键地球物质循环前沿科学中心“GeoX”交叉项目</span>
-            <span class="detail">“弱天气背景下土壤水垂直运移对陆-气水循环的影响研究”（2025-2027），主持。</span>
+            <span class="detail">“弱天气背景下土壤水垂直运移对陆-气水循环的影响研究”（2025-2027），<span class="highlight-host">主持</span>。</span>
         </div>
         <div class="list-item">
             <span class="title">国家自然科学基金面上项目</span>
@@ -448,14 +493,17 @@
         </div>
         <div class="list-item">
             <span class="title">大学生创新创业科研项目</span>
-            <span class="detail">“西风急流不同区段对中国东部夏季降水的影响”（2019-2021），主持。</span>
+            <span class="detail">“西风急流不同区段对中国东部夏季降水的影响”（2019-2021），<span class="highlight-host">主持</span>。</span>
         </div>
 
         <!-- 学术论文 -->
         <h2 class="h2-section">📄 学术论文</h2>
         <div class="list-item">
             <span class="title">Xie, Y., Yuan, H. 2024.</span>
-            <span class="detail">Local and downstream effects of vertical soil water flow on summer persistent extreme precipitation events in Southeast China. <em>Journal of Geophysical Research: Atmospheres</em>, 129(24), e2023JD040339.</span>
+            <span class="detail">
+                Local and downstream effects of vertical soil water flow on summer persistent extreme precipitation events in Southeast China. <em>Journal of Geophysical Research: Atmospheres</em>, 129(24), e2023JD040339.
+                <a href="https://doi.org/10.1029/2023JD040339" target="_blank" rel="noopener">https://doi.org/10.1029/2023JD040339</a>
+            </span>
         </div>
 
         <!-- 发明专利 -->
@@ -484,7 +532,7 @@
             <span class="detail">Influences of different sections of East Asian westerly jet on precipitation over Eastern China during early summer. The 14th International Conference on Mesoscale Convective Systems and High-Impact Weather in East Asia. Nanjing.</span>
         </div>
 
-        <!-- ========== 荣誉奖励 ========== -->
+        <!-- ===== 荣誉奖励 ===== -->
         <h1 class="h1-section">🏆 荣誉奖励</h1>
         <div class="badge-list">
             <span class="badge">2025 博士英才一等奖学金</span>
@@ -502,7 +550,7 @@
             <span class="badge">2018-2019 南京信息工程大学优秀共青团干部、优秀共青团员、优秀学生干部、优秀志愿者等</span>
         </div>
 
-        <!-- ========== 专业技能 ========== -->
+        <!-- ===== 专业技能 ===== -->
         <h1 class="h1-section">🛠️ 专业技能</h1>
         <div class="skill-block">
             <div class="skill-item"><strong>计算编程：</strong>熟练掌握 Fortran、Matlab、Python 等编程语言，熟悉 Linux 操作系统</div>
@@ -510,24 +558,81 @@
             <div class="skill-item"><strong>语言能力：</strong>CET-4 级、CET-6 级英语证书，具备扎实的学术文献阅读与文档撰写能力</div>
         </div>
 
-        <!-- ========== 实践实习 ========== -->
+        <!-- ===== 实践实习 ===== -->
         <h1 class="h1-section">💼 实践实习</h1>
         <div class="practice-block">
             <strong>实习经历：</strong>福建省气象台（2026.01）和福建省三明市气象台（2021.01）、南京信息工程大学“观云测天”实践计划（2019.04 - 2020.01，考核优秀）<br />
             <strong>助教经历：</strong>南京大学高等大气科学概论（全英文研究生核心课）、大气科学综合实验（本科核心课）等课程助教
         </div>
 
-        <!-- ========== 兴趣爱好 ========== -->
+        <!-- ===== 兴趣爱好 ===== -->
         <h1 class="h1-section">🏊 兴趣爱好</h1>
         <div class="practice-block" style="padding-top: 0;">
             游泳、羽毛球、跑步（参加校园马拉松等）
         </div>
 
-        <!-- ========== 返回主页 ========== -->
+        <!-- ===== 返回主页 ===== -->
         <div class="back-link">
             <a href="index.html">← 返回个人主页</a>
         </div>
 
     </div>
+
+    <!-- ===== JavaScript：复制功能 ===== -->
+    <script>
+        (function() {
+            'use strict';
+
+            const copyBtns = document.querySelectorAll('.copy-btn');
+
+            copyBtns.forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const targetId = this.getAttribute('data-target');
+                    const valueElement = document.getElementById(targetId);
+                    if (!valueElement) return;
+
+                    const textToCopy = valueElement.textContent.trim();
+
+                    // 使用 modern clipboard API
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                        navigator.clipboard.writeText(textToCopy).then(() => {
+                            showCopiedFeedback(this);
+                        }).catch(() => {
+                            fallbackCopy(textToCopy, this);
+                        });
+                    } else {
+                        fallbackCopy(textToCopy, this);
+                    }
+                });
+            });
+
+            function fallbackCopy(text, btn) {
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                try {
+                    document.execCommand('copy');
+                    showCopiedFeedback(btn);
+                } catch (err) {
+                    alert('复制失败，请手动复制。');
+                }
+                document.body.removeChild(textarea);
+            }
+
+            function showCopiedFeedback(btn) {
+                const original = btn.textContent;
+                btn.textContent = '✅';
+                btn.classList.add('copied');
+                setTimeout(() => {
+                    btn.textContent = original;
+                    btn.classList.remove('copied');
+                }, 2000);
+            }
+
+        })();
+    </script>
+
 </body>
 </html>
