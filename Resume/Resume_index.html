@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>谢有涌 · 个人主页</title>
+    <title>谢有涌 · 个人简历</title>
     <style>
         /* 全局重置 */
         * {
@@ -14,53 +14,72 @@
 
         body {
             font-family: 'Segoe UI', 'PingFang SC', Roboto, 'Helvetica Neue', sans-serif;
+            background: linear-gradient(145deg, #f5f0fa 0%, #e8e0f0 100%);
             min-height: 100vh;
+            padding: 40px 20px;
             display: flex;
             justify-content: center;
-            align-items: center;
-            padding: 40px 20px;
-            background: linear-gradient(135deg, #f6d5f7 0%, #fbe9d7 100%);
-            /* 柔和粉紫渐变背景，漂亮且护眼 */
+            align-items: flex-start;
         }
 
-        /* 主卡片 – 毛玻璃效果 */
-        .card {
-            max-width: 900px;
+        .container {
+            max-width: 1000px;
             width: 100%;
-            background: rgba(255, 255, 255, 0.75);
-            backdrop-filter: blur(18px);
-            -webkit-backdrop-filter: blur(18px);
-            border-radius: 48px;
-            padding: 48px 52px 42px;
-            box-shadow: 0 30px 70px rgba(0, 0, 0, 0.12), 0 10px 30px rgba(0, 0, 0, 0.04);
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 40px;
+            padding: 44px 50px 38px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08), 0 8px 24px rgba(0, 0, 0, 0.04);
             border: 1px solid rgba(255, 255, 255, 0.5);
-            transition: transform 0.25s ease;
+            transition: transform 0.2s;
         }
 
-        .card:hover {
-            transform: scale(1.003);
+        .container:hover {
+            transform: scale(1.001);
         }
 
-        /* 主标题 */
-        .main-title {
+        /* 头部：姓名 + 下载按钮 */
+        .header {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+            gap: 12px 20px;
+        }
+
+        .name-title {
             font-size: 38px;
             font-weight: 700;
             color: #2d1b3d;
             letter-spacing: 1px;
-            margin-bottom: 6px;
-            display: flex;
+        }
+
+        .download-btn {
+            background: #2d1b3d;
+            color: #fff;
+            border: none;
+            padding: 10px 28px;
+            border-radius: 40px;
+            font-size: 16px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
             align-items: center;
-            gap: 12px;
+            gap: 8px;
+            transition: 0.2s;
+            box-shadow: 0 4px 14px rgba(45, 27, 61, 0.2);
+            white-space: nowrap;
         }
 
-        .main-title small {
-            font-size: 18px;
-            font-weight: 400;
-            color: #6b4f7a;
-            letter-spacing: 0;
+        .download-btn:hover {
+            background: #4d2f5e;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(45, 27, 61, 0.3);
         }
 
-        /* 个人信息条 – 用 flex 换行 */
+        /* 个人信息条 */
         .info-bar {
             background: rgba(255, 255, 255, 0.5);
             border-radius: 40px;
@@ -97,12 +116,12 @@
             font-weight: 300;
         }
 
-        /* 分割装饰线 */
+        /* 分割线 */
         .section-divider {
             height: 2px;
             background: linear-gradient(90deg, transparent, #c9b0d6, transparent);
             margin: 28px 0 24px 0;
-            opacity: 0.4;
+            opacity: 0.3;
         }
 
         /* 一级标题 */
@@ -110,24 +129,24 @@
             font-size: 26px;
             font-weight: 700;
             color: #2d1b3d;
-            margin-top: 8px;
-            margin-bottom: 16px;
-            padding-left: 4px;
-            border-left: 6px solid #a67cb8;
+            margin: 28px 0 14px 0;
             padding-left: 16px;
+            border-left: 6px solid #a67cb8;
             letter-spacing: 0.3px;
         }
 
-        /* 二级标题（用于学术经历下的子项） */
+        .h1-section:first-of-type {
+            margin-top: 0;
+        }
+
+        /* 二级标题 */
         .h2-section {
             font-size: 20px;
             font-weight: 600;
             color: #3f2a4f;
-            margin-top: 18px;
-            margin-bottom: 8px;
-            padding-left: 6px;
-            border-bottom: 1px dashed #dac3e3;
+            margin: 18px 0 8px 6px;
             padding-bottom: 4px;
+            border-bottom: 1px dashed #dac3e3;
         }
 
         /* 教育背景条目 */
@@ -177,24 +196,88 @@
             color: #2d1b3d;
         }
 
-        /* 学术经历 – 空的 placeholder 样式 */
-        .placeholder-text {
-            color: #9a85a8;
-            font-style: italic;
-            padding: 12px 0 6px 12px;
+        /* 列表样式：用于项目、论文、专利、会议、荣誉等 */
+        .list-item {
+            padding: 6px 0 6px 24px;
+            margin-left: 6px;
+            line-height: 1.7;
+            color: #2d1b3d;
             font-size: 15px;
-            letter-spacing: 0.2px;
+            list-style: none;
+            position: relative;
         }
 
-        /* 统一列表样式 (用于会议、专利等，虽然暂时空) */
-        .empty-note {
-            color: #b09bbd;
+        .list-item::before {
+            content: "•";
+            color: #a67cb8;
+            font-weight: bold;
+            position: absolute;
+            left: 4px;
+        }
+
+        .list-item .title {
+            font-weight: 600;
+            color: #1f1129;
+        }
+
+        .list-item .detail {
+            color: #3f2a4f;
+        }
+
+        .list-item .conference {
+            color: #5d3d6e;
             font-style: italic;
-            padding: 6px 0 6px 12px;
-            font-size: 14px;
         }
 
-        /* 底部返回链接 */
+        /* 荣誉奖励、专业技能等使用紧凑列表 */
+        .badge-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px 16px;
+            padding: 6px 0 6px 12px;
+        }
+
+        .badge-list .badge {
+            background: rgba(167, 124, 184, 0.12);
+            padding: 4px 16px;
+            border-radius: 30px;
+            font-size: 14px;
+            color: #2d1b3d;
+            border: 1px solid rgba(167, 124, 184, 0.2);
+        }
+
+        .skill-block {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px 30px;
+            padding: 10px 12px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            margin: 8px 0 4px 0;
+        }
+
+        .skill-block .skill-item {
+            font-size: 15px;
+            color: #2d1b3d;
+        }
+
+        .skill-block .skill-item strong {
+            color: #3f2a4f;
+            font-weight: 600;
+        }
+
+        .practice-block {
+            padding: 8px 12px;
+            line-height: 1.8;
+            font-size: 15px;
+            color: #2d1b3d;
+        }
+
+        .practice-block strong {
+            color: #3f2a4f;
+        }
+
+        /* 底部返回 */
         .back-link {
             margin-top: 34px;
             padding-top: 18px;
@@ -220,27 +303,25 @@
             box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
         }
 
-        /* 让复制更友好（所有文本可选中） */
-        .card * {
-            user-select: text;
-        }
-
         /* 响应式 */
         @media (max-width: 640px) {
-            .card {
-                padding: 28px 18px 28px;
-                border-radius: 32px;
+            .container {
+                padding: 24px 16px 28px;
+                border-radius: 28px;
             }
-            .main-title {
+            .name-title {
                 font-size: 28px;
-                flex-wrap: wrap;
             }
-            .main-title small {
-                font-size: 16px;
+            .header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .download-btn {
+                justify-content: center;
             }
             .info-bar {
-                font-size: 14px;
-                gap: 10px 18px;
+                font-size: 13px;
+                gap: 8px 12px;
                 padding: 12px 16px;
             }
             .info-bar .divider {
@@ -258,27 +339,36 @@
             .edu-item .time {
                 min-width: unset;
             }
-            .edu-detail {
-                padding-left: 12px;
-                font-size: 14px;
+            .skill-block {
+                grid-template-columns: 1fr;
+                gap: 8px;
             }
-            .back-link a {
-                display: inline-block;
-                width: 100%;
+            .badge-list {
+                gap: 6px 10px;
+            }
+            .badge-list .badge {
+                font-size: 13px;
+                padding: 2px 12px;
+            }
+            .list-item {
+                padding-left: 20px;
             }
         }
 
-        /* 打印优化，保持清晰 */
+        /* 打印优化 */
         @media print {
             body {
                 background: white;
-                padding: 20px;
+                padding: 10px;
             }
-            .card {
+            .container {
                 box-shadow: none;
-                border: 1px solid #ddd;
+                border: 1px solid #ccc;
                 backdrop-filter: none;
                 background: white;
+            }
+            .download-btn {
+                display: none;
             }
             .back-link {
                 display: none;
@@ -287,12 +377,14 @@
     </style>
 </head>
 <body>
+    <div class="container">
 
-    <div class="card">
-
-        <!-- 标题 -->
-        <div class="main-title">
-            谢有涌
+        <!-- 头部：姓名 + 下载按钮 -->
+        <div class="header">
+            <span class="name-title">谢有涌</span>
+            <a href="谢有涌简历.pdf" class="download-btn" download="谢有涌简历.pdf">
+                ⬇️ 下载简历 (PDF)
+            </a>
         </div>
 
         <!-- 个人信息条 -->
@@ -342,32 +434,100 @@
         </div>
 
         <!-- ========== 学术经历 ========== -->
-        <h1 class="h1-section" style="margin-top: 32px;">📚 学术经历</h1>
+        <h1 class="h1-section">📚 学术经历</h1>
 
-        <!-- 科研项目（二级标题） -->
+        <!-- 科研项目 -->
         <h2 class="h2-section">🔬 科研项目</h2>
-        <div class="placeholder-text">
-            （暂无公开项目，等待更新……）
+        <div class="list-item">
+            <span class="title">教育部关键地球物质循环前沿科学中心“GeoX”交叉项目</span>
+            <span class="detail">“弱天气背景下土壤水垂直运移对陆-气水循环的影响研究”（2025-2027），主持。</span>
+        </div>
+        <div class="list-item">
+            <span class="title">国家自然科学基金面上项目</span>
+            <span class="detail">“土壤湿度初始化对 WRF-Hydro 模式陆面水文过程模拟的影响”（2021-2024），参与。</span>
+        </div>
+        <div class="list-item">
+            <span class="title">大学生创新创业科研项目</span>
+            <span class="detail">“西风急流不同区段对中国东部夏季降水的影响”（2019-2021），主持。</span>
         </div>
 
-        <!-- 发明专利（二级标题） -->
+        <!-- 学术论文 -->
+        <h2 class="h2-section">📄 学术论文</h2>
+        <div class="list-item">
+            <span class="title">Xie, Y., Yuan, H. 2024.</span>
+            <span class="detail">Local and downstream effects of vertical soil water flow on summer persistent extreme precipitation events in Southeast China. <em>Journal of Geophysical Research: Atmospheres</em>, 129(24), e2023JD040339.</span>
+        </div>
+
+        <!-- 发明专利 -->
         <h2 class="h2-section">💡 发明专利</h2>
-        <div class="placeholder-text">
-            （暂无记录，欢迎关注……）
+        <div class="list-item">
+            <span class="title">谢有涌, 袁慧玲.</span>
+            <span class="detail">一种基于可视化信息的弱天气强迫强降水事件客观识别方法. 授权专利号：ZL202510281807.5.</span>
         </div>
 
-        <!-- 学术会议（二级标题） -->
+        <!-- 学术会议 -->
         <h2 class="h2-section">🗣️ 学术会议</h2>
-        <div class="placeholder-text">
-            （暂无参会记录，敬请期待……）
+        <div class="list-item">
+            <span class="title">谢有涌, 袁慧玲, 2025.</span>
+            <span class="detail">土壤水热过程对华南暖季弱天气强迫强降水的影响. 第七届全国中尺度气象学研讨会. 大同.</span>
+        </div>
+        <div class="list-item">
+            <span class="title">Xie, Y., Yuan, H. 2023.</span>
+            <span class="detail">Impact of vertical movement of soil liquid water on an extreme precipitation event in South China. The 20th Annual Meeting of Asia Oceania Geosciences Society. Singapore.</span>
+        </div>
+        <div class="list-item">
+            <span class="title">Xie, Y., Zhi, X. 2021.</span>
+            <span class="detail">Impact of COVID-19 Lockdown and atmospheric circulation on the air quality in Wuhan during early 2020. The 4th Annual International Conference on Energy Development and Environmental Protection. Guiyang. (英文口头报告)</span>
+        </div>
+        <div class="list-item">
+            <span class="title">Xie, Y., Zhi, X. 2021.</span>
+            <span class="detail">Influences of different sections of East Asian westerly jet on precipitation over Eastern China during early summer. The 14th International Conference on Mesoscale Convective Systems and High-Impact Weather in East Asia. Nanjing.</span>
+        </div>
+
+        <!-- ========== 荣誉奖励 ========== -->
+        <h1 class="h1-section">🏆 荣誉奖励</h1>
+        <div class="badge-list">
+            <span class="badge">2025 博士英才一等奖学金</span>
+            <span class="badge">2025 第七届全国中尺度气象学研讨会优秀学术墙报奖</span>
+            <span class="badge">2025 南京大学优秀研究生</span>
+            <span class="badge">2025 南京大学大气科学学院优秀研究生标兵</span>
+            <span class="badge">2024 南京大学博士培优计划（天气学方向考核第一名）</span>
+            <span class="badge">2023-2025 博士研究生学业奖学金</span>
+            <span class="badge">2021-2022 硕士研究生二等学业奖学金</span>
+            <span class="badge">2017-2020 国家励志奖学金（三次）</span>
+            <span class="badge">2017-2020 南京信息工程大学三好学生（三次）</span>
+            <span class="badge">2019 工业与应用数学学会数学建模竞赛三等奖</span>
+            <span class="badge">2018 全国大学生数学竞赛三等奖</span>
+            <span class="badge">2019 南信大第八届气象探测技能竞赛三等奖</span>
+            <span class="badge">2018-2019 南京信息工程大学优秀共青团干部、优秀共青团员、优秀学生干部、优秀志愿者等</span>
+        </div>
+
+        <!-- ========== 专业技能 ========== -->
+        <h1 class="h1-section">🛠️ 专业技能</h1>
+        <div class="skill-block">
+            <div class="skill-item"><strong>计算编程：</strong>熟练掌握 Fortran、Matlab、Python 等编程语言，熟悉 Linux 操作系统</div>
+            <div class="skill-item"><strong>气象技能：</strong>熟练使用 WRF、WRF-HRLDAS 等数值模式，具备灾害性天气模拟、诊断分析与机理研究等核心技能</div>
+            <div class="skill-item"><strong>语言能力：</strong>CET-4 级、CET-6 级英语证书，具备扎实的学术文献阅读与文档撰写能力</div>
+        </div>
+
+        <!-- ========== 实践实习 ========== -->
+        <h1 class="h1-section">💼 实践实习</h1>
+        <div class="practice-block">
+            <strong>实习经历：</strong>福建省气象台（2026.01）和福建省三明市气象台（2021.01）、南京信息工程大学“观云测天”实践计划（2019.04 - 2020.01，考核优秀）<br />
+            <strong>助教经历：</strong>南京大学高等大气科学概论（全英文研究生核心课）、大气科学综合实验（本科核心课）等课程助教
+        </div>
+
+        <!-- ========== 兴趣爱好 ========== -->
+        <h1 class="h1-section">🏊 兴趣爱好</h1>
+        <div class="practice-block" style="padding-top: 0;">
+            游泳、羽毛球、跑步（参加校园马拉松等）
         </div>
 
         <!-- ========== 返回主页 ========== -->
         <div class="back-link">
-            <a href="/index.html">← 返回个人主页</a>
+            <a href="index.html">← 返回个人主页</a>
         </div>
 
     </div>
-
 </body>
 </html>
