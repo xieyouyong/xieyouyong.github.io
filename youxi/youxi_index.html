@@ -1,1 +1,65 @@
-
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="基于《尤溪县方言志》的资料问答，保留方言音标与原书出处。">
+  <meta name="referrer" content="no-referrer">
+  <title>尤溪方言 · 资料问答</title>
+  <link rel="stylesheet" href="./style.css">
+  <script type="module" src="./app.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="./youxi_index.html"><span class="seal" aria-hidden="true">溪</span><span>尤溪方言<span class="brand-sub">资料问答</span></span></a>
+    <div class="top-actions"><a class="home-link" href="../">个人主页 ↗</a><button id="settings-open" class="outline" type="button">连接模型 <span id="connection-dot" class="dot"></span></button></div>
+  </header>
+  <main class="layout">
+    <section class="conversation" aria-label="方言问答">
+      <div id="welcome" class="welcome">
+        <p class="eyebrow"><span class="tiny-line"></span> 从方言志里，找一句有出处的回答</p>
+        <h1>问一句<span>尤溪话。</span></h1>
+        <p class="intro">关于城关话的声、韵、调与连读音变，<br>让回答回到资料，也让乡音有据可寻。</p>
+        <div class="suggestions" aria-label="试问一个问题">
+          <button type="button" data-question="尤溪县城关话有几个声调？各自的调值是什么？"><span>01</span>城关话有几个声调？<span aria-hidden="true">↗</span></button>
+          <button type="button" data-question="“唔烘”怎么读？连读时声母有什么变化？"><span>02</span>“唔烘”怎么读？<span aria-hidden="true">↗</span></button>
+          <button type="button" data-question="双音节词的变调有哪些主要规律？请举例。"><span>03</span>双音节词如何变调？<span aria-hidden="true">↗</span></button>
+        </div>
+      </div>
+      <div id="messages" class="messages" role="log" aria-label="对话记录"></div>
+      <div class="composer-wrap">
+        <p id="status" class="status" role="status">正在载入方言资料…</p>
+        <form id="question-form" class="composer">
+          <label class="sr-only" for="question">你想了解的尤溪方言问题</label>
+          <textarea id="question" rows="2" maxlength="1200" placeholder="你想了解哪一句尤溪话？" required></textarea>
+          <button id="send" class="send" type="submit" disabled aria-label="发送问题">↑</button>
+          <button id="stop" class="outline hidden" type="button">停止</button>
+        </form>
+        <p class="composer-note">依据资料回答 · 保留音标 · 可查看出处 <span>Enter 发送，Shift + Enter 换行</span></p>
+      </div>
+    </section>
+    <aside class="sources-panel" aria-label="回答依据">
+      <div class="panel-heading"><span class="eyebrow">参考资料</span><span class="live-badge">首轮复核</span></div>
+      <div class="book-cover" aria-hidden="true"><div class="book-rule"></div><p>尤溪县<br>方言志</p><span>YOUXI DIALECT</span><div class="book-rule"></div></div>
+      <h2>《尤溪县方言志》</h2>
+      <p class="coverage">当前收录第二章第一、二节<br>原书第 6–9 页 · 城关话</p>
+      <div class="scope-note">全书仍在校对。回答限于当前资料范围；原书中的疑点会随回答说明。</div>
+      <div class="sources-heading"><h3>本次回答的出处</h3><span id="source-count">—</span></div>
+      <div id="sources"><p class="source-empty">提出问题后，这里会显示检索到的资料片段和原书页码。</p></div>
+    </aside>
+  </main>
+  <dialog id="settings" aria-labelledby="settings-title">
+    <form id="settings-form">
+      <div class="dialog-heading"><h2 id="settings-title">连接回答模型</h2><button id="settings-close" type="button" class="icon-button" aria-label="关闭">×</button></div>
+      <p>输入自己的 DeepSeek API 密钥，开始资料问答。</p>
+      <label for="api-key">API 密钥</label>
+      <input id="api-key" type="password" placeholder="sk-…" autocomplete="off" spellcheck="false" required>
+      <label for="model">模型</label>
+      <input id="model" value="deepseek-flash" required autocomplete="off" spellcheck="false" maxlength="100">
+      <p class="privacy-note">密钥仅在本页内存中使用，刷新即清除。问题和检索片段会发送给 DeepSeek，调用按你的账户计费。</p>
+      <a href="https://platform.deepseek.com/api_keys" target="_blank" rel="noopener noreferrer">获取 DeepSeek API 密钥 ↗</a>
+      <div class="dialog-actions"><button id="disconnect" type="button" class="outline">清除连接</button><button type="submit" class="primary">连接并继续</button></div>
+    </form>
+  </dialog>
+</body>
+</html>
