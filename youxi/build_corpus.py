@@ -1,11 +1,15 @@
 """Build a static corpus from the reviewed source, retaining source pages."""
 from pathlib import Path
+import argparse
 import json
 import re
 import hashlib
 
 DATA = Path(__file__).parent / 'data'
-source = DATA / 'source.md'
+parser = argparse.ArgumentParser(description='Build the website corpus directly from a reviewed Markdown file.')
+parser.add_argument('--source', type=Path, required=True, help='Reviewed Markdown source in the dialect project; read directly without copying it into the website.')
+args = parser.parse_args()
+source = args.source
 raw = source.read_text(encoding='utf-8')
 blocks = []
 parts = []

@@ -20,15 +20,17 @@
 
 ## 资料
 
-`data/source.md` 是第二章第一、二节首轮复核稿，含 2026-10-14 用户纠正的“唔烘”；不是全书或第二章全文。`data/corpus.json` 是可检索片段，保留文白读文字标记、出处、原书调值疑点。扫描字形仍有复核风险，首轮复核不等于学术审定。
+Markdown 原文只保存在方言项目的 `data/reviewed/尤溪方言_第二章_第一二节_复核稿.md`，含 2026-10-14 用户纠正的“唔烘”；不是全书或第二章全文。网站不再保留一份重复的 source.md。`data/corpus.json` 是生成的发布文件，保留文白读文字标记、出处和原书调值疑点。扫描字形仍有复核风险，首轮复核不等于学术审定。
 
 更新资料后，从仓库根目录运行：
 
 ```powershell
-python -X utf8 youxi/build_corpus.py
+python -X utf8 youxi/build_corpus.py --source "E:\Youxi_dialect\data\reviewed\尤溪方言_第二章_第一二节_复核稿.md"
 ```
 
 页面无外部 JS 库，不需要安装前端依赖或构建工具。`youxi/index.html` 兼容 `/youxi/` 入口，现有主页链接保持 `youxi/youxi_index.html`。
+
+本地网页代码只保存在 `C:\Users\谢有涌\xieyouyong.github.io\youxi`。`E:\Youxi_dialect\web` 是指向它的目录联接，可从方言项目直接编辑同一份网页；它不是另一个副本。生成脚本从原文路径直接读取，只更新发布用 JSON。
 
 ## 发布
 
