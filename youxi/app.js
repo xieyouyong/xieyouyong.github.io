@@ -1,7 +1,7 @@
 import { createRetriever, buildMessages } from './rag.js?v=2';
 import { planQuestion, searchWeb } from './search.js?v=2';
 const $ = id => document.getElementById(id);
-let corpus, retrieve, credential='', model='deepseek-flash', controller=null, pendingQuestion='', searchCredential='', history=[];
+let retrieve, credential='', model='deepseek-flash', controller=null, pendingQuestion='', searchCredential='', history=[];
 const escape = s => String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function hideReferences(s) { return s.replace(/\[([^\]]+)\]\(https?:\/\/[^)]+\)/g,'$1').replace(/\[\d{1,2}\]/g,'').replace(/https?:\/\/[^\s<>]+/g,''); }
 function inline(s) { return escape(s).replace(/`([^`]+)`/g,'<code>$1</code>').replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>'); }
@@ -25,7 +25,7 @@ function markdown(text) {
 }
 function addMessage(role,text='') {
   const el=document.createElement('article');el.className=`message ${role}`;
-  const label=document.createElement('div');label.className='message-label';label.textContent=role==='user'?'你的问题':'尤溪方言 · 资料回答';
+  const label=document.createElement('div');label.className='message-label';label.textContent=role==='user'?'你的问题':'最尾厝问问';
   const body=document.createElement('div');body.className='message-body';body.textContent=text;
   el.append(label,body);$('messages').append(el);return {el,body};
 }
@@ -38,7 +38,7 @@ $('disconnect').onclick=()=>{credential='';searchCredential='';$('api-key').valu
 $('settings-form').onsubmit=e=>{
   e.preventDefault();credential=$('api-key').value.trim();model=$('model').value.trim();searchCredential=$('search-key').value.trim();
   if(!credential||!model)return;
-  $('api-key').value='';$('search-key').value='';$('settings').close();$('connection-dot').classList.add('connected');$('status').textContent='已设置连接 · 提交问题时调用模型';
+  $('api-key').value='';$('search-key').value='';$('settings').close();$('connection-dot').classList.add('connected');$('status').textContent=searchCredential?'模型已配置 · 联网搜索已配置（按需使用）':'模型已配置 · 未配置联网搜索';
   if(pendingQuestion){const q=pendingQuestion;pendingQuestion='';ask(q);}
 };
 $('stop').onclick=()=>controller?.abort();
@@ -116,7 +116,7 @@ async function ask(question) {
   }
 }
 try{
-  const response=await fetch('./data/corpus.json');if(!response.ok)throw new Error();corpus=await response.json();
+  const response=await fetch('./data/corpus.json');if(!response.ok)throw new Error();const corpus=await response.json();
   if(!Array.isArray(corpus.chunks)||!corpus.chunks.length)throw new Error();retrieve=createRetriever(corpus.chunks);
   $('send').disabled=false;$('status').textContent='资料已就绪 · 首次提问时连接 DeepSeek';
 }catch{

@@ -3,27 +3,26 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="基于《尤溪县方言志》的资料问答，结合方言资料、AI推测和联网检索。">
+  <meta name="description" content="结合资料、AI推测和联网检索。">
   <meta name="referrer" content="no-referrer">
-  <title>尤溪方言 · 资料问答</title>
+  <title>最尾厝问问</title>
   <link rel="icon" type="image/jpeg" href="../assets/logo.jpg">
-  <link rel="stylesheet" href="./style.css?v=2">
-  <script type="module" src="./app.js?v=2"></script>
+  <link rel="stylesheet" href="./style.css?v=3">
+  <script type="module" src="./app.js?v=3"></script>
 </head>
 <body>
   <header class="topbar">
-    <a class="brand" href="./youxi_index.html"><span class="seal" aria-hidden="true">溪</span><span>尤溪方言<span class="brand-sub">资料问答</span></span></a>
+    <a class="brand" href="./youxi_index.html"><span class="seal" aria-hidden="true">尤</span><span>尤溪县方言<span class="brand-sub">问答</span></span></a>
     <div class="top-actions"><a class="home-link" href="../">个人主页 ↗</a><button id="settings-open" class="outline" type="button">连接模型 <span id="connection-dot" class="dot"></span></button></div>
   </header>
   <main class="layout">
     <section class="conversation" aria-label="方言问答">
       <div id="welcome" class="welcome">
-        <p class="eyebrow"><span class="tiny-line"></span> 读资料，也试着理解乡音</p>
-        <h1>问一句<span>尤溪话。</span></h1>
-        <p class="intro">关于城关话的声、韵、调与连读音变，<br>资料原文与 AI 推测，分开回答。</p>
+        <h1><span>最尾厝</span>问问</h1>
+        <p class="intro">关于尤溪县方言<br>资料原文与 AI 推测，分开回答</p>
         <div class="suggestions" aria-label="试问一个问题">
           <button type="button" data-question="尤溪县城关话有几个声调？各自的调值是什么？"><span>01</span>城关话有几个声调？<span aria-hidden="true">↗</span></button>
-          <button type="button" data-question="“唔烘”怎么读？连读时声母有什么变化？"><span>02</span>“唔烘”怎么读？<span aria-hidden="true">↗</span></button>
+          <button type="button" data-question="尤溪县城关话有几个声母、韵母？"><span>02</span>城关话有几个声母、韵母？<span aria-hidden="true">↗</span></button>
           <button type="button" data-question="尤溪城关话与普通话的声调有什么区别？请自主比较。"><span>03</span>与普通话有什么区别？<span aria-hidden="true">↗</span></button>
         </div>
       </div>
@@ -32,14 +31,13 @@
         <p id="status" class="status" role="status">正在载入方言资料…</p>
         <form id="question-form" class="composer">
           <label class="sr-only" for="question">你想了解的尤溪方言问题</label>
-          <textarea id="question" rows="2" maxlength="1200" placeholder="你想了解哪一句尤溪话？" required></textarea>
+          <textarea id="question" rows="2" maxlength="1200" placeholder="输入关于尤溪县方言的问题..." required></textarea>
           <button id="send" class="send" type="submit" disabled aria-label="发送问题">↑</button>
           <button id="stop" class="outline hidden" type="button">停止</button>
         </form>
-        <p class="composer-note">资料原文 · AI 推测 · 自主比较 <span>Enter 发送，Shift + Enter 换行</span></p>
+        <p class="composer-note">资料原文 · AI 推测 <span>Enter 发送，Shift + Enter 换行</span></p>
       </div>
     </section>
-
   </main>
   <dialog id="settings" aria-labelledby="settings-title">
     <form id="settings-form">

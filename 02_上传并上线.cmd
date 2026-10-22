@@ -25,7 +25,7 @@ function Git-Run {
 function Confirm-Action {
     param([string]$Message)
     Write-Host $Message -ForegroundColor Yellow
-    if ((Read-Host '输入 YES 继续，其他输入取消') -cne 'YES') { throw '已取消，未执行本次覆盖或上传。' }
+    if ((Read-Host '输入 y 继续，其他输入取消') -cne 'y') { throw '已取消，未执行本次覆盖或上传。' }
 }
 function Assert-NoLinks {
     param([string]$Path)
