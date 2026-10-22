@@ -1,7 +1,8 @@
 import { createRetriever, buildMessages } from './rag.js?v=2';
-import { planQuestion, searchWeb } from './search.js?v=2';
+import { planQuestion } from './search.js?v=4';
+import { apiRequest } from './connection.js?v=4';
 const $ = id => document.getElementById(id);
-let retrieve, credential='', model='deepseek-flash', controller=null, pendingQuestion='', searchCredential='', history=[];
+let retrieve, credential='', controller=null, pendingQuestion='', history=[];
 const escape = s => String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function hideReferences(s) { return s.replace(/\[([^\]]+)\]\(https?:\/\/[^)]+\)/g,'$1').replace(/\[\d{1,2}\]/g,'').replace(/https?:\/\/[^\s<>]+/g,''); }
 function inline(s) { return escape(s).replace(/`([^`]+)`/g,'<code>$1</code>').replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>'); }
@@ -30,16 +31,22 @@ function addMessage(role,text='') {
   el.append(label,body);$('messages').append(el);return {el,body};
 }
 function busy(on){$('send').classList.toggle('hidden',on);$('stop').classList.toggle('hidden',!on);$('question').disabled=on;$('send').disabled=on||!retrieve;$('settings-open').disabled=on;document.querySelectorAll('[data-question]').forEach(b=>b.disabled=on);}
-function openSettings(){ $('api-key').value=credential;$('search-key').value=searchCredential;$('model').value=model;$('settings').showModal(); }
+function openSettings(){ $('access-password').value='';$('login-status').textContent='';$('settings').showModal(); }
 $('settings-open').onclick=openSettings;
 $('settings-close').onclick=()=>{$('settings').close();pendingQuestion='';};
 $('settings').addEventListener('cancel',()=>pendingQuestion='');
-$('disconnect').onclick=()=>{credential='';searchCredential='';$('api-key').value='';$('search-key').value='';$('connection-dot').classList.remove('connected');$('status').textContent='连接已清除。输入 API 密钥后可继续问答。';};
-$('settings-form').onsubmit=e=>{
-  e.preventDefault();credential=$('api-key').value.trim();model=$('model').value.trim();searchCredential=$('search-key').value.trim();
-  if(!credential||!model)return;
-  $('api-key').value='';$('search-key').value='';$('settings').close();$('connection-dot').classList.add('connected');$('status').textContent=searchCredential?'模型已配置 · 联网搜索已配置（按需使用）':'模型已配置 · 未配置联网搜索';
-  if(pendingQuestion){const q=pendingQuestion;pendingQuestion='';ask(q);}
+$('disconnect').onclick=()=>{credential='';$('access-password').value='';$('connection-dot').classList.remove('connected');$('status').textContent='连接已清除，输入访问密码后可继续。';};
+$('settings-form').onsubmit=async e=>{
+  e.preventDefault();const password=$('access-password').value;
+  if(!password)return;
+  const button=$('connect-submit');button.disabled=true;$('login-status').textContent='正在验证…';
+  try{
+    const response=await apiRequest('/auth',password,{},AbortSignal.timeout(15000));
+    if(!response.ok){const data=await response.json();throw new Error(data.error||'连接失败，请稍后重试。');}
+    credential=password;$('access-password').value='';$('settings').close();$('connection-dot').classList.add('connected');$('status').textContent='模型已连接 · 当前未启用联网搜索';
+    if(pendingQuestion){const q=pendingQuestion;pendingQuestion='';ask(q);}
+  }catch(err){$('login-status').textContent=err instanceof TypeError?'无法连接问答服务，请检查网络及 Worker 部署。':err.message;}
+  finally{button.disabled=false;}
 };
 $('stop').onclick=()=>controller?.abort();
 $('question-form').onsubmit=e=>{e.preventDefault();ask($('question').value.trim());};
@@ -57,7 +64,7 @@ async function ask(question) {
   let text='', complete=false, searchState='未联网';
   answer.body.classList.add('streaming');answer.body.textContent='正在理解问题…';$('status').textContent='正在理解问题并检索资料…';
   try{
-    const plan=await planQuestion(question,history,credential,model,controller.signal);
+    const plan=await planQuestion(question,history,credential,controller.signal);
     if(controller.signal.aborted)throw new Error('已停止');
     const queries=[question+(isFollowup?' '+lastQuestion:''),...plan.localQueries];
     const ranked=new Map();
@@ -66,23 +73,15 @@ async function ask(question) {
       if(!previous||hit.score>previous.score)ranked.set(hit.id,hit);
     }
     const hits=[...ranked.values()].sort((a,b)=>b.score-a.score).slice(0,8);
-    let webResults=[];
-    if(plan.searchNeeded||!hits.length){
-      if(searchCredential){
-        $('status').textContent='正在联网搜索…';answer.body.textContent='正在搜索相关信息…';
-        try{
-          const found=await searchWeb(plan.webQueries,searchCredential,controller.signal);webResults=found.results;
-          searchState=found.results.length?(found.partial?'已取得部分网络搜索结果，其余请求失败':'已取得网络搜索结果'):'已执行搜索，但没有相关结果';
-        }catch{searchState='联网搜索失败；没有取得网络参考';}
-      }else{searchState='未配置搜索密钥，本次未联网';}
-    }else{searchState='本次未联网；问题由本地资料与一般知识回答';}
+    const webResults=[];
+    searchState='本次未联网；使用本地资料与一般知识回答';
     if(controller.signal.aborted)throw new Error('已停止');
     answer.body.textContent='正在组织资料原文与 AI 推测…';$('status').textContent=searchState+' · 正在生成回答…';
-    const response=await fetch('https://api.deepseek.com/chat/completions',{
-      method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${credential}`},signal:controller.signal,
-      body:JSON.stringify({model,messages:buildMessages(question,hits,history,webResults,searchState),stream:true,temperature:.6,max_tokens:4000,thinking:{type:'disabled'}})
-    });
-    if(!response.ok){const reasons={400:'模型名或请求参数无效，请检查模型设置。',401:'API 密钥无效，请重新连接模型。',402:'DeepSeek 账户余额不足。',403:'该密钥没有调用权限。',429:'请求过于频繁，请稍后重试。'};throw new Error(reasons[response.status]||`模型服务返回 ${response.status}，请稍后重试。`);}
+    const response=await apiRequest('/chat',credential,{messages:buildMessages(question,hits,history,webResults,searchState)},controller.signal);
+    if(!response.ok){
+      if(response.status===401){credential='';$('connection-dot').classList.remove('connected');}
+      const data=await response.json();throw new Error(data.error||`问答服务返回 ${response.status}，请稍后重试。`);
+    }
     if(!response.body)throw new Error('浏览器没有收到回答数据，请重试。');
     const reader=response.body.getReader(),decoder=new TextDecoder();let buffer='';
     const processLine=line=>{
@@ -100,7 +99,7 @@ async function ask(question) {
       while((idx=buffer.indexOf('\n'))!==-1){processLine(buffer.slice(0,idx).replace(/\r$/,''));buffer=buffer.slice(idx+1);}
       if(done){if(buffer.trim())processLine(buffer.trim());break;}
     }
-    if(!text.trim())throw new Error('模型没有返回回答，请检查模型设置后重试。');
+    if(!text.trim())throw new Error('模型没有返回回答，请稍后重试。');
     if(!complete)throw new Error('回答连接中断，以下内容可能不完整，请重试。');
     answer.body.classList.remove('streaming');answer.body.innerHTML=markdown(hideReferences(text));
     history.push({role:'user',content:question},{role:'assistant',content:hideReferences(text)});history=history.slice(-6);
@@ -108,7 +107,7 @@ async function ask(question) {
   }catch(err){
     answer.body.classList.remove('streaming');answer.body.textContent=hideReferences(text);
     const p=document.createElement('p');p.className='message-error';
-    p.textContent=controller.signal.aborted?(controller.signal.reason==='timeout'?'等待回答超时，请稍后重试。':'已停止生成；已有内容可能不完整。'):(err instanceof TypeError?'无法连接 DeepSeek，请检查网络后重试。':err.message);
+    p.textContent=controller.signal.aborted?(controller.signal.reason==='timeout'?'等待回答超时，请稍后重试。':'已停止生成；已有内容可能不完整。'):(err instanceof TypeError?'无法连接问答服务，请检查网络后重试。':err.message);
     answer.el.append(p);$('status').textContent='生成未完成 · 请重试';
   }finally{
     clearTimeout(timer);controller=null;busy(false);
@@ -118,7 +117,7 @@ async function ask(question) {
 try{
   const response=await fetch('./data/corpus.json');if(!response.ok)throw new Error();const corpus=await response.json();
   if(!Array.isArray(corpus.chunks)||!corpus.chunks.length)throw new Error();retrieve=createRetriever(corpus.chunks);
-  $('send').disabled=false;$('status').textContent='资料已就绪 · 首次提问时连接 DeepSeek';
+  $('send').disabled=false;$('status').textContent='资料已就绪 · 首次提问时输入访问密码';
 }catch{
   $('status').textContent='方言资料加载失败，请刷新页面。';$('question').disabled=true;
 }
