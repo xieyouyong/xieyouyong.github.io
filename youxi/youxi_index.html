@@ -7,13 +7,13 @@
   <meta name="referrer" content="no-referrer">
   <title>最尾厝问问</title>
   <link rel="icon" type="image/jpeg" href="../assets/logo.jpg">
-  <link rel="stylesheet" href="./style.css?v=3">
-  <script type="module" src="./app.js?v=4"></script>
+  <link rel="stylesheet" href="./style.css?v=5">
+  <script type="module" src="./app.js?v=5"></script>
 </head>
 <body>
   <header class="topbar">
     <a class="brand" href="./youxi_index.html"><span class="seal" aria-hidden="true">尤</span><span>尤溪县方言<span class="brand-sub">问答</span></span></a>
-    <div class="top-actions"><a class="home-link" href="../">个人主页 ↗</a><button id="settings-open" class="outline" type="button">连接模型 <span id="connection-dot" class="dot"></span></button></div>
+    <div class="top-actions"><a class="home-link" href="../">返回最尾厝 ↗</a><button id="settings-open" class="outline" type="button">连接模型 <span id="connection-dot" class="dot"></span></button></div>
   </header>
   <main class="layout">
     <section class="conversation" aria-label="方言问答">
@@ -42,11 +42,28 @@
   <dialog id="settings" aria-labelledby="settings-title">
     <form id="settings-form">
       <div class="dialog-heading"><h2 id="settings-title">连接回答模型</h2><button id="settings-close" type="button" class="icon-button" aria-label="关闭">×</button></div>
-      <p>输入访问密码，开始方言资料问答。</p>
-      <label for="access-password">访问密码</label>
-      <input id="access-password" type="password" autocomplete="off" spellcheck="false" maxlength="128" required>
+      <fieldset class="connection-choice">
+        <legend>选择连接方式</legend>
+        <label><input type="radio" name="connection-mode" value="shared" checked>最尾厝密钥</label>
+        <label><input type="radio" name="connection-mode" value="personal">使用自己的 API 密钥</label>
+      </fieldset>
+      <div id="shared-fields">
+        <label for="access-password">最尾厝密钥</label>
+        <input id="access-password" type="password" placeholder="输入提供给你的访问密码" autocomplete="off" spellcheck="false" maxlength="128" required>
+        <p class="privacy-note">使用最尾厝提供的模型额度。</p>
+      </div>
+      <div id="personal-fields" class="hidden">
+        <label for="api-key">DeepSeek API 密钥</label>
+        <input id="api-key" type="password" placeholder="sk-…" autocomplete="off" spellcheck="false" disabled>
+        <label for="model">模型名称</label>
+        <input id="model" value="deepseek-flash" autocomplete="off" spellcheck="false" maxlength="100" disabled>
+        <p class="privacy-note">使用你自己的 DeepSeek 账户额度。</p>
+      </div>
+      <label for="search-key">Tavily 联网搜索密钥（可选）</label>
+      <input id="search-key" type="password" placeholder="tvly-…" autocomplete="off" spellcheck="false">
+      <p class="privacy-note">两种连接方式均可搭配自己的搜索密钥；填写后按需搜索，未填写则不联网搜索。</p>
       <p id="login-status" role="status"></p>
-      <p class="privacy-note">密码仅在当前页面内存中使用，刷新后需要重新输入。问题与检索片段经问答服务发送给模型；当前未启用联网搜索。</p>
+      <p class="privacy-note">密码与密钥仅保存在当前页面内存中，刷新即清除。最尾厝模式经问答服务调用模型；自带模型密钥直接连接 DeepSeek。开启搜索时，搜索词发送给 Tavily。</p>
       <div class="dialog-actions"><button id="disconnect" type="button" class="outline">清除连接</button><button id="connect-submit" type="submit" class="primary">连接并继续</button></div>
     </form>
   </dialog>

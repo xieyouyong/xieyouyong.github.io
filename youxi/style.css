@@ -9,7 +9,7 @@ button:disabled {opacity:.45;cursor:not-allowed}
 button:focus-visible, a:focus-visible {outline:3px solid #94b99f;outline-offset:4px}
 .topbar {height:90px;margin:0 auto;max-width:1320px;padding:0 48px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line)}
 .brand {display:flex;align-items:center;gap:13px;text-decoration:none;font-size:19px;font-weight:650;letter-spacing:1px}
-.brand-sub {display:block;font-size:11px;letter-spacing:3px;color:var(--muted);font-weight:400;margin-top:4px}
+.brand-sub {text-align:center;display:block;font-size:11px;letter-spacing:3px;color:var(--muted);font-weight:400;margin-top:4px}
 .seal {width:43px;height:43px;display:grid;place-items:center;background:var(--green);color:#f6f4eb;border-radius:10px;font-family:serif;font-size:26px;font-weight:400}
 .top-actions {display:flex;align-items:center;gap:26px}
 .home-link {font-size:12px;text-decoration:none;color:var(--muted)}
@@ -19,17 +19,17 @@ button:focus-visible, a:focus-visible {outline:3px solid #94b99f;outline-offset:
 .dot.connected {background:#4f916a}
 .layout {display:block;max-width:880px;margin:0 auto;padding:26px 40px 0}
 .conversation {min-width:0;display:flex;flex-direction:column;min-height:calc(100dvh - 116px)}
-.welcome {padding:54px 0 36px;max-width:680px;margin:auto 0}
+.welcome {padding:54px 0 36px;width:100%;max-width:680px;margin:auto;text-align:center}
 h1 {font-family:"Noto Serif SC","Songti SC",SimSun,serif;font-size:clamp(38px,4.2vw,57px);font-weight:500;letter-spacing:2px;line-height:1.35;margin:23px 0}
 h1 span {color:var(--green)}
 .intro {font-size:15px;line-height:2;color:var(--muted);margin:0 0 30px}
-.suggestions {display:flex;flex-direction:column;gap:10px;max-width:520px}
+.suggestions {display:flex;flex-direction:column;gap:10px;max-width:520px;margin:0 auto}
 .suggestions button {display:flex;align-items:center;gap:17px;border:1px solid var(--line);background:rgba(255,255,255,.6);color:var(--ink);border-radius:9px;padding:16px 19px;font-size:14px;text-align:left;transition:background .15s,border-color .15s}
 .suggestions button:hover {background:var(--white);border-color:#a3b3a5}
 .suggestions button span:first-child {font-size:10px;font-family:monospace;color:#97a297}
 .suggestions button span:last-child {margin-left:auto;color:#849489}
 .composer-wrap {position:sticky;bottom:0;margin-top:auto;background:var(--paper);padding:16px 0 22px;z-index:2}
-.status {font-size:12px;color:var(--muted);min-height:18px;margin:0 0 10px;line-height:1.6}
+.status {text-align:center;font-size:12px;color:var(--muted);min-height:18px;margin:0 0 10px;line-height:1.6}
 .composer {display:flex;align-items:flex-end;gap:12px;padding:17px 17px 17px 20px;border:1px solid #cfd9cc;border-radius:14px;background:#fff;box-shadow:0 5px 20px #25483207}
 .composer:focus-within {border-color:#759981;box-shadow:0 0 0 3px #e8eee5}
 textarea {resize:none;border:0;outline:0;background:transparent;flex:1;min-width:0;max-height:160px;line-height:1.7;color:var(--ink)}
@@ -82,7 +82,7 @@ dialog a {font-size:12px}
   .brand {font-size:16px;gap:9px}
   .seal {width:36px;height:36px;font-size:23px}
   .top-actions {gap:12px}
-  .home-link {display:none}
+  .home-link {display:inline;font-size:11px}
   .outline {padding:9px 11px;font-size:12px}
   .layout {padding:0 18px}
   .conversation {min-height:calc(100dvh - 76px)}
@@ -99,3 +99,9 @@ dialog a {font-size:12px}
 @media(prefers-reduced-motion:reduce) {
   * {scroll-behavior:auto!important;transition:none!important}
 }
+
+.connection-choice {border:1px solid var(--line);border-radius:8px;margin:20px 0 0;padding:12px;display:flex;flex-wrap:wrap;gap:12px}
+.connection-choice legend {font-size:12px;padding:0 5px}
+.connection-choice label {display:flex;align-items:center;gap:7px;margin:0;font-size:12px;cursor:pointer}
+.connection-choice input {width:auto;margin:0;accent-color:var(--green)}
+@media(max-width:420px) {.top-actions {gap:8px}.topbar {padding:0 12px}.brand {font-size:14px;gap:6px}.seal {width:30px;height:30px;font-size:20px}.top-actions .outline {padding:8px}.home-link {font-size:10px}}

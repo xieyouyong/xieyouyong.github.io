@@ -1,8 +1,8 @@
 import { createRetriever, buildMessages } from './rag.js?v=2';
-import { planQuestion } from './search.js?v=4';
-import { apiRequest } from './connection.js?v=4';
+import { planQuestion, searchWeb } from './search.js?v=5';
+import { apiRequest, modelRequest } from './connection.js?v=5';
 const $ = id => document.getElementById(id);
-let retrieve, credential='', controller=null, pendingQuestion='', history=[];
+let retrieve, connection=null, controller=null, pendingQuestion='', history=[];
 const escape = s => String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function hideReferences(s) { return s.replace(/\[([^\]]+)\]\(https?:\/\/[^)]+\)/g,'$1').replace(/\[\d{1,2}\]/g,'').replace(/https?:\/\/[^\s<>]+/g,''); }
 function inline(s) { return escape(s).replace(/`([^`]+)`/g,'<code>$1</code>').replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>'); }
@@ -31,22 +31,46 @@ function addMessage(role,text='') {
   el.append(label,body);$('messages').append(el);return {el,body};
 }
 function busy(on){$('send').classList.toggle('hidden',on);$('stop').classList.toggle('hidden',!on);$('question').disabled=on;$('send').disabled=on||!retrieve;$('settings-open').disabled=on;document.querySelectorAll('[data-question]').forEach(b=>b.disabled=on);}
-function openSettings(){ $('access-password').value='';$('login-status').textContent='';$('settings').showModal(); }
+let loginController=null;
+const modeInputs=[...document.querySelectorAll('input[name="connection-mode"]')];
+function selectedMode(){return modeInputs.find(input=>input.checked).value;}
+function updateMode(){
+  const shared=selectedMode()==='shared';
+  $('shared-fields').classList.toggle('hidden',!shared);$('personal-fields').classList.toggle('hidden',shared);
+  $('access-password').disabled=!shared;$('access-password').required=shared;
+  for(const id of ['api-key','model']){$(id).disabled=shared;$(id).required=!shared;}
+  $('login-status').textContent='';
+}
+modeInputs.forEach(input=>input.onchange=updateMode);
+function clearInputs(){for(const id of ['access-password','api-key','search-key'])$(id).value='';}
+function openSettings(){
+  clearInputs();modeInputs.forEach(input=>input.checked=input.value===(connection?.mode||'shared'));
+  $('model').value=connection?.model||'deepseek-flash';updateMode();$('settings').showModal();
+}
+function closeSettings(){loginController?.abort();clearInputs();pendingQuestion='';}
 $('settings-open').onclick=openSettings;
-$('settings-close').onclick=()=>{$('settings').close();pendingQuestion='';};
-$('settings').addEventListener('cancel',()=>pendingQuestion='');
-$('disconnect').onclick=()=>{credential='';$('access-password').value='';$('connection-dot').classList.remove('connected');$('status').textContent='连接已清除，输入访问密码后可继续。';};
+$('settings-close').onclick=()=>{$('settings').close();closeSettings();};
+$('settings').addEventListener('cancel',closeSettings);
+$('disconnect').onclick=()=>{loginController?.abort();connection=null;clearInputs();$('login-status').textContent='';$('connection-dot').classList.remove('connected');$('status').textContent='连接已清除，请选择连接方式。';};
 $('settings-form').onsubmit=async e=>{
-  e.preventDefault();const password=$('access-password').value;
-  if(!password)return;
-  const button=$('connect-submit');button.disabled=true;$('login-status').textContent='正在验证…';
+  e.preventDefault();if(loginController)return;
+  const mode=selectedMode();
+  const candidate={mode,credential:mode==='shared'?$('access-password').value:$('api-key').value.trim(),model:$('model').value.trim(),searchKey:$('search-key').value.trim()};
+  if(!candidate.credential||mode==='personal'&&!candidate.model)return;
+  const button=$('connect-submit');button.disabled=true;modeInputs.forEach(input=>input.disabled=true);
+  const login=new AbortController();loginController=login;const timer=setTimeout(()=>login.abort(),15000);
+  $('login-status').textContent=mode==='shared'?'正在验证最尾厝密钥…':'正在保存本次连接…';
   try{
-    const response=await apiRequest('/auth',password,{},AbortSignal.timeout(15000));
-    if(!response.ok){const data=await response.json();throw new Error(data.error||'连接失败，请稍后重试。');}
-    credential=password;$('access-password').value='';$('settings').close();$('connection-dot').classList.add('connected');$('status').textContent='模型已连接 · 当前未启用联网搜索';
+    if(mode==='shared'){
+      const response=await apiRequest('/auth',candidate.credential,{},login.signal);
+      if(!response.ok){const data=await response.json();throw new Error(data.error||'连接失败，请稍后重试。');}
+    }
+    if(login.signal.aborted)return;
+    connection=candidate;clearInputs();$('settings').close();$('connection-dot').classList.add('connected');
+    $('status').textContent=(mode==='shared'?'已连接最尾厝密钥':'已配置自己的 API 密钥')+(candidate.searchKey?' · 联网搜索已配置（按需使用）':' · 未启用联网搜索');
     if(pendingQuestion){const q=pendingQuestion;pendingQuestion='';ask(q);}
-  }catch(err){$('login-status').textContent=err instanceof TypeError?'无法连接问答服务，请检查网络及 Worker 部署。':err.message;}
-  finally{button.disabled=false;}
+  }catch(err){if(!login.signal.aborted)$('login-status').textContent=err instanceof TypeError?'无法连接问答服务，请检查网络。':err.message;else if($('settings').open)$('login-status').textContent='连接超时或已取消，请重试。';}
+  finally{clearTimeout(timer);loginController=null;button.disabled=false;modeInputs.forEach(input=>input.disabled=false);}
 };
 $('stop').onclick=()=>controller?.abort();
 $('question-form').onsubmit=e=>{e.preventDefault();ask($('question').value.trim());};
@@ -55,16 +79,16 @@ document.querySelectorAll('[data-question]').forEach(b=>b.onclick=()=>{if(!retri
 async function ask(question) {
   if(!question||controller||!retrieve)return;
   if(question.length>1200){$('status').textContent='请把问题缩短到1200字以内。';return;}
-  if(!credential){pendingQuestion=question;openSettings();return;}
+  if(!connection){pendingQuestion=question;openSettings();return;}
   $('welcome').classList.add('hidden');$('question').value='';busy(true);addMessage('user',question);
   const lastQuestion=history.filter(m=>m.role==='user').at(-1)?.content||'';
   const isFollowup=/^(那|它|这个|那个|还有|为什么|举例|继续)/.test(question);
   const answer=addMessage('assistant');answer.el.scrollIntoView({behavior:'smooth',block:'start'});
   controller=new AbortController();const timer=setTimeout(()=>controller?.abort('timeout'),210000);
   let text='', complete=false, searchState='未联网';
-  answer.body.classList.add('streaming');answer.body.textContent='正在理解问题…';$('status').textContent='正在理解问题并检索资料…';
+  answer.body.classList.add('streaming');answer.body.textContent='正在查询最尾厝书房';$('status').textContent='正在查询最尾厝书房';
   try{
-    const plan=await planQuestion(question,history,credential,controller.signal);
+    const plan=await planQuestion(question,history,connection,controller.signal);
     if(controller.signal.aborted)throw new Error('已停止');
     const queries=[question+(isFollowup?' '+lastQuestion:''),...plan.localQueries];
     const ranked=new Map();
@@ -73,14 +97,24 @@ async function ask(question) {
       if(!previous||hit.score>previous.score)ranked.set(hit.id,hit);
     }
     const hits=[...ranked.values()].sort((a,b)=>b.score-a.score).slice(0,8);
-    const webResults=[];
+    let webResults=[];
     searchState='本次未联网；使用本地资料与一般知识回答';
+    if(connection.searchKey&&(!hits.length||/对比|比较|区别|不同|普通话|闽南|闽北|闽东|福州|厦门|泉州|搜索|上网|联网|最新/.test(question))){
+      $('status').textContent='正在查询最尾厝书房';
+      try{
+        const found=await searchWeb([question],connection.searchKey,controller.signal);webResults=found.results;
+        searchState=webResults.length?'已取得网络搜索结果':'已执行搜索，但没有相关结果';
+      }catch{searchState='联网搜索失败；没有取得网络参考';}
+    }
     if(controller.signal.aborted)throw new Error('已停止');
-    answer.body.textContent='正在组织资料原文与 AI 推测…';$('status').textContent=searchState+' · 正在生成回答…';
-    const response=await apiRequest('/chat',credential,{messages:buildMessages(question,hits,history,webResults,searchState)},controller.signal);
+    answer.body.textContent='正在查询最尾厝书房';$('status').textContent='正在查询最尾厝书房';
+    const response=await modelRequest('/chat',connection,{messages:buildMessages(question,hits,history,webResults,searchState)},controller.signal);
     if(!response.ok){
-      if(response.status===401){credential='';$('connection-dot').classList.remove('connected');}
-      const data=await response.json();throw new Error(data.error||`问答服务返回 ${response.status}，请稍后重试。`);
+      const personal=connection.mode==='personal';
+      if(response.status===401){connection=null;$('connection-dot').classList.remove('connected');}
+      const data=await response.json().catch(()=>({}));
+      const reasons={400:'模型名称或参数无效，请检查模型设置。',401:'API 密钥无效，请重新连接。',402:'DeepSeek 账户余额不足。',403:'API 密钥没有调用权限。',429:'请求过于频繁，请稍后重试。'};
+      throw new Error((personal?reasons[response.status]:data.error)||`问答服务返回 ${response.status}，请稍后重试。`);
     }
     if(!response.body)throw new Error('浏览器没有收到回答数据，请重试。');
     const reader=response.body.getReader(),decoder=new TextDecoder();let buffer='';
@@ -117,7 +151,7 @@ async function ask(question) {
 try{
   const response=await fetch('./data/corpus.json');if(!response.ok)throw new Error();const corpus=await response.json();
   if(!Array.isArray(corpus.chunks)||!corpus.chunks.length)throw new Error();retrieve=createRetriever(corpus.chunks);
-  $('send').disabled=false;$('status').textContent='资料已就绪 · 首次提问时输入访问密码';
+  $('send').disabled=false;$('status').textContent='资料已就绪 · 可使用最尾厝密钥或自己的 API 密钥';
 }catch{
   $('status').textContent='方言资料加载失败，请刷新页面。';$('question').disabled=true;
 }
