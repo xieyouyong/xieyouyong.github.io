@@ -44,3 +44,11 @@ python -X utf8 youxi/build_corpus.py --source "E:\Youxi_dialect\data\reviewed\�
 ## 发布
 
 先拉取最新 `main`，仅暂存 `youxi/`，再提交并推送。若推送被拒绝，重新 fetch 并把本批提交 rebase 到最新 `origin/main`；不要 force push，不要顺带提交简历等其他板块。GitHub Pages 部署完成后访问页面确认。
+
+## 修改回答规则与国内部署
+
+`answer-prompt.md` 是网页回答规则的唯一入口；启动时与知识库一起加载。原rag.js中两层回答的规则已原样迁移到该文件。修改后提交并发布，刷新网页生效。
+
+国内后台及部署说明：`E:\Youxi_dialect\domestic`。打包脚本直接读取本站youxi目录，只在部署产物中将共享API地址改为同站点`/api`；原GitHub站仍使用Cloudflare地址。国内后台也读取同一份answer-prompt.md作为共享回答规则。
+
+`ingest.py`和`query.py`是独立的本地向量检索/命令行流程，不负责当前网页。详见`E:\Youxi_dialect\如何修改问答习惯.md`。

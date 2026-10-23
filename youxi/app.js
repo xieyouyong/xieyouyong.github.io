@@ -1,4 +1,4 @@
-import { createRetriever, buildMessages } from './rag.js?v=2';
+import { createRetriever, buildMessages, setAnswerPrompt } from './rag.js?v=6';
 import { planQuestion, searchWeb } from './search.js?v=5';
 import { apiRequest, modelRequest } from './connection.js?v=5';
 const $ = id => document.getElementById(id);
@@ -149,9 +149,11 @@ async function ask(question) {
   }
 }
 try{
-  const response=await fetch('./data/corpus.json');if(!response.ok)throw new Error();const corpus=await response.json();
+  const [response,promptResponse]=await Promise.all([fetch('./data/corpus.json'),fetch('./answer-prompt.md',{cache:'no-cache'})]);
+  if(!response.ok||!promptResponse.ok)throw new Error();
+  const corpus=await response.json();setAnswerPrompt(await promptResponse.text());
   if(!Array.isArray(corpus.chunks)||!corpus.chunks.length)throw new Error();retrieve=createRetriever(corpus.chunks);
   $('send').disabled=false;$('status').textContent='资料已就绪 · 可使用最尾厝密钥或自己的 API 密钥';
 }catch{
-  $('status').textContent='方言资料加载失败，请刷新页面。';$('question').disabled=true;
+  $('status').textContent='方言资料或回答规则加载失败，请刷新页面。';$('question').disabled=true;
 }
