@@ -774,7 +774,6 @@ fluxPublic.load().then(info => {
   readyText = "公开资料已就绪 · " + info.sites + " 个站点 · " + info.dat + " 份小时 DAT";
   status.textContent = readyText;
   settingsOpen.hidden = false;
-  updateModelStatus();
   input.disabled = false;
   send.disabled = false;
   for (const button of examples) button.disabled = false;
