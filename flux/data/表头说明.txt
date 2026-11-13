@@ -1,0 +1,17 @@
+SITE_ID	ID of the site
+Count	Number of datasets containing this site
+Relation	Relationships among the time spans of different datasets
+Source_all	Datasets that include data for this site
+Source_done	Final selected datasets and their time spans: semicolons (;) denote continuous coverage, while exclamation marks (!) indicate gaps (disjoint periods)
+SITE_NAME	Site name
+longitude	Longitude
+latitude	Latitude
+elevation	Elevation
+elevation_reference	Source of elevation information
+IGBP	Land use type
+IGBP_reference	Source of land use type information
+soiltype	Soil type
+soiltype_reference	Source of soil type information
+UTC_OFFSET	Time adjustment (offset) needed to convert data to UTC
+HEIGHTC	Vegetation canopy height
+HEIGHTC_reference	Source of vegetation canopy height information
