@@ -1,3 +1,4 @@
+import { bindModelDialog } from '../assets/model-dialog.js?v=1';
 import { createRetriever, buildMessages, setAnswerPrompt } from './rag.js?v=6';
 import { planQuestion, searchWeb } from './search.js?v=5';
 import { apiRequest, modelRequest } from './connection.js?v=5';
@@ -31,47 +32,28 @@ function addMessage(role,text='') {
   el.append(label,body);$('messages').append(el);return {el,body};
 }
 function busy(on){$('send').classList.toggle('hidden',on);$('stop').classList.toggle('hidden',!on);$('question').disabled=on;$('send').disabled=on||!retrieve;$('settings-open').disabled=on;document.querySelectorAll('[data-question]').forEach(b=>b.disabled=on);}
-let loginController=null;
-const modeInputs=[...document.querySelectorAll('input[name="connection-mode"]')];
-function selectedMode(){return modeInputs.find(input=>input.checked).value;}
-function updateMode(){
-  const shared=selectedMode()==='shared';
-  $('shared-fields').classList.toggle('hidden',!shared);$('personal-fields').classList.toggle('hidden',shared);
-  $('access-password').disabled=!shared;$('access-password').required=shared;
-  for(const id of ['api-key','model']){$(id).disabled=shared;$(id).required=!shared;}
-  $('login-status').textContent='';
-}
-modeInputs.forEach(input=>input.onchange=updateMode);
-function clearInputs(){for(const id of ['access-password','api-key','search-key'])$(id).value='';}
-function openSettings(){
-  clearInputs();modeInputs.forEach(input=>input.checked=input.value===(connection?.mode||'shared'));
-  $('model').value=connection?.model||'deepseek-flash';updateMode();$('settings').showModal();
-}
-function closeSettings(){loginController?.abort();clearInputs();pendingQuestion='';}
-$('settings-open').onclick=openSettings;
-$('settings-close').onclick=()=>{$('settings').close();closeSettings();};
-$('settings').addEventListener('cancel',closeSettings);
-$('disconnect').onclick=()=>{loginController?.abort();connection=null;clearInputs();$('login-status').textContent='';$('connection-dot').classList.remove('connected');$('status').textContent='连接已清除，请选择连接方式。';};
-$('settings-form').onsubmit=async e=>{
-  e.preventDefault();if(loginController)return;
-  const mode=selectedMode();
-  const candidate={mode,credential:mode==='shared'?$('access-password').value:$('api-key').value.trim(),model:$('model').value.trim(),searchKey:$('search-key').value.trim()};
-  if(!candidate.credential||mode==='personal'&&!candidate.model)return;
-  const button=$('connect-submit');button.disabled=true;modeInputs.forEach(input=>input.disabled=true);
-  const login=new AbortController();loginController=login;const timer=setTimeout(()=>login.abort(),15000);
-  $('login-status').textContent=mode==='shared'?'正在验证最尾厝密钥…':'正在保存本次连接…';
-  try{
-    if(mode==='shared'){
-      const response=await apiRequest('/auth',candidate.credential,{},login.signal);
-      if(!response.ok){const data=await response.json();throw new Error(data.error||'连接失败，请稍后重试。');}
+const settings = bindModelDialog({
+  async authenticate(candidate, signal) {
+    const response = candidate.mode === 'shared'
+      ? await apiRequest('/auth', candidate.credential, {}, signal)
+      : await modelRequest('/plan', candidate, {question:'连接测试'}, signal);
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      throw new Error(data.error?.message || data.error || '连接失败，请检查密钥和模型名称。');
     }
-    if(login.signal.aborted)return;
-    connection=candidate;clearInputs();$('settings').close();$('connection-dot').classList.add('connected');
-    $('status').textContent=(mode==='shared'?'已连接最尾厝密钥':'已配置自己的 API 密钥')+(candidate.searchKey?' · 联网搜索已配置（按需使用）':' · 未启用联网搜索');
-    if(pendingQuestion){const q=pendingQuestion;pendingQuestion='';ask(q);}
-  }catch(err){if(!login.signal.aborted)$('login-status').textContent=err instanceof TypeError?'无法连接问答服务，请检查网络。':err.message;else if($('settings').open)$('login-status').textContent='连接超时或已取消，请重试。';}
-  finally{clearTimeout(timer);loginController=null;button.disabled=false;modeInputs.forEach(input=>input.disabled=false);}
-};
+    await response.body?.cancel();
+  },
+  onConnection(value) {
+    connection = value;
+    if (retrieve) $('status').textContent = value
+      ? (value.mode === 'shared' ? '已连接最尾厝密钥' : '已配置自己的 API 密钥')
+      : '资料已就绪 · 可使用最尾厝密钥或自己的 API 密钥';
+  },
+  onLogin() {
+    if (pendingQuestion) {const question=pendingQuestion;pendingQuestion='';ask(question);}
+  },
+});
+$('settings').addEventListener('close',()=>{pendingQuestion='';});
 $('stop').onclick=()=>controller?.abort();
 $('question-form').onsubmit=e=>{e.preventDefault();ask($('question').value.trim());};
 $('question').onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();if(!$('send').disabled) $('question-form').requestSubmit();}};
@@ -79,7 +61,7 @@ document.querySelectorAll('[data-question]').forEach(b=>b.onclick=()=>{if(!retri
 async function ask(question) {
   if(!question||controller||!retrieve)return;
   if(question.length>1200){$('status').textContent='请把问题缩短到1200字以内。';return;}
-  if(!connection){pendingQuestion=question;openSettings();return;}
+  if(!connection){pendingQuestion=question;settings.open();return;}
   $('welcome').classList.add('hidden');$('question').value='';busy(true);addMessage('user',question);
   const lastQuestion=history.filter(m=>m.role==='user').at(-1)?.content||'';
   const isFollowup=/^(那|它|这个|那个|还有|为什么|举例|继续)/.test(question);
@@ -111,7 +93,7 @@ async function ask(question) {
     const response=await modelRequest('/chat',connection,{messages:buildMessages(question,hits,history,webResults,searchState)},controller.signal);
     if(!response.ok){
       const personal=connection.mode==='personal';
-      if(response.status===401){connection=null;$('connection-dot').classList.remove('connected');}
+      if(response.status===401){settings.clear();}
       const data=await response.json().catch(()=>({}));
       const reasons={400:'模型名称或参数无效，请检查模型设置。',401:'API 密钥无效，请重新连接。',402:'DeepSeek 账户余额不足。',403:'API 密钥没有调用权限。',429:'请求过于频繁，请稍后重试。'};
       throw new Error((personal?reasons[response.status]:data.error)||`问答服务返回 ${response.status}，请稍后重试。`);
@@ -153,7 +135,7 @@ try{
   if(!response.ok||!promptResponse.ok)throw new Error();
   const corpus=await response.json();setAnswerPrompt(await promptResponse.text());
   if(!Array.isArray(corpus.chunks)||!corpus.chunks.length)throw new Error();retrieve=createRetriever(corpus.chunks);
-  $('send').disabled=false;$('status').textContent='资料已就绪 · 可使用最尾厝密钥或自己的 API 密钥';
+  $('send').disabled=false;$('status').textContent=connection ? '已恢复模型连接' : '资料已就绪 · 可使用最尾厝密钥或自己的 API 密钥';
 }catch{
   $('status').textContent='方言资料或回答规则加载失败，请刷新页面。';$('question').disabled=true;
 }

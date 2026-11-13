@@ -1,21 +1,15 @@
-"use strict";
+import {fluxPublic} from "./public-data.js?v=2";
+import {bindModelDialog} from "../assets/model-dialog.js?v=1";
 
 const form = document.querySelector("#ask");
 const input = document.querySelector("#question");
 const send = form.querySelector("button");
 const stopAnswer = document.querySelector("#stop-answer");
 const messages = document.querySelector("#messages");
-const apiKey = document.querySelector("#api-key");
-const modelStatus = document.querySelector("#model-status");
-const modelName = document.querySelector("#model-name");
-const modelForm = document.querySelector("#model-form");
-const modelConnect = document.querySelector("#model-connect");
-const modelDisconnect = document.querySelector("#model-disconnect");
 const status = document.querySelector("#status");
 const launchHelp = document.querySelector("#launch-help");
 const examples = [...document.querySelectorAll(".suggestions button")];
 const welcome = document.querySelector("#welcome");
-const settings = document.querySelector("#settings");
 const settingsOpen = document.querySelector("#settings-open");
 const newChat = document.querySelector("#new-chat");
 const historyKey = "flux-chat-v1";
@@ -42,7 +36,7 @@ stopAnswer.addEventListener("click", () => {
 });
 
 async function streamAnswer(question, reply, request) {
-  const timeout = setTimeout(() => cancelRequest(request), 90000);
+  const timeout = setTimeout(() => cancelRequest(request), 210000);
   let partial = "";
   try {
     return await fluxPublic.ask(question, context, connection, request.controller.signal, text => {
@@ -733,7 +727,7 @@ async function submit(event) {
       return;
     }
     if (error.name === "AbortError") {
-      reply.textContent = "查询超过 90 秒。可以缩短时间范围后重试。";
+      reply.textContent = "查询超过 210 秒。可以缩短时间范围后重试。";
     } else if (error instanceof TypeError) {
       reply.textContent = "无法完成网络请求，请检查网络后重试。";
       launchHelp.hidden = false;
@@ -767,45 +761,13 @@ for (const button of examples) {
     form.requestSubmit();
   });
 }
-settingsOpen.addEventListener("click", () => settings.showModal());
-document.querySelector("#settings-close").addEventListener("click", () => settings.close());
-function updateModelStatus() {
-  settingsOpen.querySelector(".dot").classList.toggle("connected", Boolean(connection));
-  settingsOpen.firstChild.textContent = connection ? "DeepSeek 已连接 " : "回答设置 ";
-  modelStatus.textContent = connection ? "已验证模型 " + connection.name + "。"
-    : "当前使用本地查询。填写密钥后点击「连接并继续」。";
-}
-modelDisconnect.addEventListener("click", () => {
-  connection = null;
-  apiKey.value = "";
-  updateModelStatus();
-});
-modelForm.addEventListener("submit", async event => {
-  event.preventDefault();
-  if (modelConnect.disabled) return;
-  const key = apiKey.value.trim() || connection?.key || "";
-  if (!key) {
-    modelStatus.textContent = "请填写 DeepSeek API 密钥。";
-    apiKey.focus();
-    return;
-  }
-  modelConnect.disabled = true;
-  modelDisconnect.disabled = true;
-  modelStatus.textContent = "正在向 DeepSeek 发送测试请求…";
-  try {
-    const name = modelName.value.trim();
-    await fluxPublic.connect({key, name}, AbortSignal.timeout(28000));
-    connection = {key, name};
-    apiKey.value = "";
-    updateModelStatus();
-    settings.close();
-  } catch (error) {
-    const reason = error.name === "AbortError" ? "连接测试超时，请重试。" : error.message;
-    modelStatus.textContent = reason + (connection ? " 当前仍使用已验证的连接。" : "");
-  } finally {
-    modelConnect.disabled = false;
-    modelDisconnect.disabled = false;
-  }
+bindModelDialog({
+  authenticate: fluxPublic.connect,
+  onConnection(value) {
+    connection = value;
+    settingsOpen.firstChild.textContent = value?.mode === "shared" ? "最尾厝已连接 " :
+      value ? "DeepSeek 已连接 " : "连接模型 ";
+  },
 });
 restoreChat();
 fluxPublic.load().then(info => {

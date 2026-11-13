@@ -4,17 +4,17 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="查询通量站点资料与观测时间序列。">
+  <meta name="referrer" content="no-referrer">
   <title>通量站点问答</title>
-  <link rel="stylesheet" href="./style.css">
-  <script src="./public-data.js" defer></script>
-  <script src="./app.js" defer></script>
+  <link rel="stylesheet" href="./style.css?v=2">
+  <script type="module" src="./app.js?v=2"></script>
 </head>
 <body>
   <header class="topbar">
     <a class="brand" href="../" title="返回个人主页"><span class="seal" aria-hidden="true">通</span><span>FLUX<span class="brand-sub">站点问答</span></span></a>
-    <div class="top-actions">
+    <div class="top-actions"><a class="home-link" href="../">返回最尾厝大厅 ↗</a>
       <button id="new-chat" class="outline" type="button" hidden>新对话</button>
-      <button id="settings-open" class="outline" type="button" hidden>回答设置 <span class="dot" aria-hidden="true"></span></button>
+      <button id="settings-open" class="outline" type="button" hidden>连接模型 <span id="connection-dot" class="dot" aria-hidden="true"></span></button>
     </div>
   </header>
   <main class="layout">
@@ -39,21 +39,36 @@
           <button type="submit" class="send" aria-label="发送问题" disabled>↑</button>
           <button id="stop-answer" type="button" class="outline" hidden>停止</button>
         </form>
-        <p class="composer-note"><span>站点资料 · 质控逐小时</span><span>Enter 发送，Shift + Enter 换行</span></p>
+        <p class="composer-note"><span>站点资料 · 质控逐小时 · 部分原始半小时</span><span>Enter 发送，Shift + Enter 换行</span></p>
       </div>
     </section>
   </main>
   <dialog id="settings" aria-labelledby="settings-title">
-    <form id="model-form">
-      <div class="dialog-heading"><h2 id="settings-title">连接 DeepSeek</h2><button id="settings-close" class="icon-button" type="button" aria-label="关闭">×</button></div>
-      <p id="model-status" role="status"></p>
-      <label for="api-key">DeepSeek API 密钥</label>
-      <input id="api-key" type="password" autocomplete="off" placeholder="填写你的 sk-… 密钥">
-      <label class="model-name-label" for="model-name">模型名称</label>
-      <input id="model-name" type="text" value="deepseek-flash" maxlength="80" required>
-      <p>连接时会发送一次简短的测试请求。连接后，DeepSeek 会理解提问并根据查询结果回答。测试和回答会消耗 Token。</p>
-      <p>密钥仅保存在当前页面内存中，由浏览器发送给 DeepSeek。</p>
-      <div class="dialog-actions"><button id="model-disconnect" class="outline" type="button">清除连接</button><button id="model-connect" class="outline" type="submit">连接并继续</button></div>
+    <form id="settings-form">
+      <div class="dialog-heading"><h2 id="settings-title">连接回答模型</h2><button id="settings-close" type="button" class="icon-button" aria-label="关闭">×</button></div>
+      <fieldset class="connection-choice">
+        <legend>选择连接方式</legend>
+        <label><input type="radio" name="connection-mode" value="shared" checked>最尾厝密钥</label>
+        <label><input type="radio" name="connection-mode" value="personal">使用自己的 API 密钥</label>
+      </fieldset>
+      <div id="shared-fields">
+        <label for="access-password">最尾厝密钥</label>
+        <input id="access-password" type="password" placeholder="输入提供给你的访问密码" autocomplete="off" spellcheck="false" maxlength="128" required>
+        <p class="privacy-note">使用最尾厝提供的模型额度。</p>
+      </div>
+      <div id="personal-fields" class="hidden">
+        <label for="api-key">DeepSeek API 密钥</label>
+        <input id="api-key" type="password" placeholder="sk-…" autocomplete="off" spellcheck="false" disabled>
+        <label for="model">模型名称</label>
+        <input id="model" value="deepseek-flash" autocomplete="off" spellcheck="false" maxlength="100" disabled>
+        <p class="privacy-note">使用你自己的 DeepSeek 账户额度。</p>
+      </div>
+      <label for="search-key">Tavily 联网搜索密钥（可选）</label>
+      <input id="search-key" type="password" placeholder="tvly-…" autocomplete="off" spellcheck="false">
+      <p class="privacy-note">两种连接方式均可搭配自己的搜索密钥；填写后按需搜索，未填写则不联网搜索。</p>
+      <p id="login-status" role="status"></p>
+      <p class="privacy-note">连接在当前浏览器会话内由两个问答页共用。可随时清除连接。最尾厝模式经问答服务调用模型；自带模型密钥直接连接 DeepSeek。开启搜索时，搜索词发送给 Tavily。</p>
+      <div class="dialog-actions"><button id="disconnect" type="button" class="outline">清除连接</button><button id="connect-submit" type="submit" class="primary">连接并继续</button></div>
     </form>
   </dialog>
   <dialog id="delete-message-dialog" aria-labelledby="delete-message-title">

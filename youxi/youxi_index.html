@@ -8,7 +8,7 @@
   <title>最尾厝问问</title>
   <link rel="icon" type="image/jpeg" href="../assets/logo.jpg">
   <link rel="stylesheet" href="./style.css?v=5">
-  <script type="module" src="./app.js?v=6"></script>
+  <script type="module" src="./app.js?v=7"></script>
 </head>
 <body>
   <header class="topbar">
@@ -63,7 +63,7 @@
       <input id="search-key" type="password" placeholder="tvly-…" autocomplete="off" spellcheck="false">
       <p class="privacy-note">两种连接方式均可搭配自己的搜索密钥；填写后按需搜索，未填写则不联网搜索。</p>
       <p id="login-status" role="status"></p>
-      <p class="privacy-note">密码与密钥仅保存在当前页面内存中，刷新即清除。最尾厝模式经问答服务调用模型；自带模型密钥直接连接 DeepSeek。开启搜索时，搜索词发送给 Tavily。</p>
+      <p class="privacy-note">连接在当前浏览器会话内由两个问答页共用。可随时清除连接。最尾厝模式经问答服务调用模型；自带模型密钥直接连接 DeepSeek。开启搜索时，搜索词发送给 Tavily。</p>
       <div class="dialog-actions"><button id="disconnect" type="button" class="outline">清除连接</button><button id="connect-submit" type="submit" class="primary">连接并继续</button></div>
     </form>
   </dialog>
