@@ -1,5 +1,6 @@
 import {searchWeb} from "../youxi/search.js?v=6";
 import {apiRequest} from "../youxi/connection.js?v=6";
+import {stationAvailability, formatAvailability} from "./availability.js?v=1";
 
 export const fluxPublic = (() => {
   const ids = "CN-Aro CN-BeO CN-Dda CN-Din CN-Dsh CN-Du2 CN-Dzo CN-HaM CN-Jng CN-Lch CN-Xi2 CN-YaS CN-You CN-Yuc".split(" ");
@@ -24,7 +25,7 @@ export const fluxPublic = (() => {
     reco: ["RECO", "µmol CO₂ m⁻² s⁻¹", /生态系统呼吸|\bRECO(?:_[A-Z0-9]+)*\b/i],
   };
   const fields = {...variables, ...rawVariables};
-  let rawIndex;
+  let rawIndex, availability;
   const regions = {
     亚洲: "AE AF AM AZ BD BH BN BT CN CY GE HK ID IL IN IQ IR JO JP KG KH KP KR KW KZ LA LB LK MM MN MO MV MY NP OM PH PK PS QA SA SG SY TH TJ TL TM TR UZ VN YE",
     欧洲: "AD AL AT AX BA BE BG BY CH CZ DE DK EE ES FI FO FR GB GG GI GR HR HU IE IM IS IT JE LI LT LU LV MC MD ME MK MT NL NO PL PT RO RS RU SE SI SJ SK SM UA VA",
@@ -384,13 +385,19 @@ export const fluxPublic = (() => {
     if (!plan.sites.length) return {text: "请指定要查询的站点。", evidence: "未指定站点。"};
     const query = [...plan.columns.map(column => ({key: family(column) || column, column})),
       ...plan.variables.filter(key => !plan.columns.some(column => family(column) === key)).map(key => ({key}))];
-    if (!query.length) return {text: "请指定变量或原始表中的列名。", evidence: "未指定变量。"};
+    if (!query.length) {
+      availability ||= JSON.parse(await read('./data/availability.json', signal));
+      const stationData = plan.sites.slice(0, 14).map(site => stationAvailability(site, catalog, availability));
+      return {text: "请指定变量或原始表中的列名。", evidence: "未指定有效变量，请参考页面追加的站点可用字段。",
+        availability_text: formatAvailability(stationData)};
+    }
 
     const ranges = (plan.periods.length ? plan.periods : [{}]).map(range => ({
       start: range.start ? Date.parse(range.start) : -Infinity, end: range.end ? Date.parse(range.end) : Infinity,
       label: range.start ? range.start.slice(0, 7) : "可用时段",
     }));
-    const notices = [], series = [], stats = [];
+    const notices = [], series = [], stats = [], fulfilled = new Set();
+    const requestKey = (site, index, range) => [site, index, range.start, range.end].join('|');
     const stamp = time => new Date(time).toISOString().slice(0, 16);
     const within = (points, range) => points.filter(([time]) => time >= range.start && time < range.end);
     const stationIds = plan.sites.slice(0, 14);
@@ -399,6 +406,7 @@ export const fluxPublic = (() => {
     }));
 
     function addSeries(site, index, range, points, rawColumn) {
+      fulfilled.add(requestKey(site, index, range));
       const {label, unit} = axes[index];
       const raw = Boolean(rawColumn);
       const kind = raw ? "FLUXNET 半小时" : "质控逐小时 DAT";
@@ -470,8 +478,22 @@ export const fluxPublic = (() => {
       const {citation, url, license} = rawIndex[site];
       return "[" + citation + "](" + url + ") · " + license + "。数据按年分片，半小时时间按站点时区换算为 UTC。";
     });
+    const missingSites = stationIds.filter(site => query.some((_, index) =>
+      ranges.some(range => !fulfilled.has(requestKey(site, index, range)))));
+    let stationData = [];
+    if (missingSites.length) {
+      availability ||= JSON.parse(await read('./data/availability.json', signal));
+      stationData = missingSites.map(site => stationAvailability(site, catalog, availability));
+    }
     return {text: [...notices, report.join("\n"), ...attribution].filter(Boolean).join("\n\n"), chart: charts[0], other_charts: charts.slice(1),
-      evidence: {stats, notices, charts: charts.map(chart => ({axes: chart.axes, series: chart.series.map(item => ({legend: item.legend, mark: item.mark, axis: item.axis}))}))}};
+      availability_text: formatAvailability(stationData),
+      evidence: {stats, notices, station_availability: stationData.map(({site_id, name, sources}) => ({site_id, name,
+        sources: Object.fromEntries(Object.entries(sources).map(([kind, source]) => [kind, {
+          source: source.source, valid_variables: Object.keys(source.columns),
+          start: Object.values(source.columns).map(column => column.start).sort()[0],
+          end: Object.values(source.columns).map(column => column.end).sort().at(-1),
+        }]))})),
+        charts: charts.map(chart => ({axes: chart.axes, series: chart.series.map(item => ({legend: item.legend, mark: item.mark, axis: item.axis}))}))}};
   }
 
   async function mapAnswer(plan, rows, signal) {
@@ -635,7 +657,8 @@ export const fluxPublic = (() => {
         modelError = error.message;
       }
     }
-    const {evidence, ...reply} = result;
+    const {evidence, availability_text, ...reply} = result;
+    if (availability_text) summary += '\n\n' + availability_text;
     return {...reply, summary, model_used: modelUsed, model_error: modelError,
       context: {publicPlan: plan, publicQuestion: question}};
   }
