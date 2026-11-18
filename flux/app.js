@@ -1,5 +1,5 @@
-import {fluxPublic} from "./public-data.js?v=2";
-import {bindModelDialog} from "../assets/model-dialog.js?v=1";
+import {fluxPublic} from "./public-data.js?v=3";
+import {bindModelDialog} from "../assets/model-dialog.js?v=2";
 
 const form = document.querySelector("#ask");
 const input = document.querySelector("#question");
@@ -771,9 +771,9 @@ bindModelDialog({
 });
 restoreChat();
 fluxPublic.load().then(info => {
-  readyText = "公开资料已就绪 · " + info.sites + " 个站点 · " + info.dat + " 份小时 DAT";
+  readyText = "免费问答已就绪 · " + info.sites + " 个站点 · " + info.dat + " 份小时 DAT";
   status.textContent = readyText;
-  settingsOpen.hidden = false;
+  settingsOpen.hidden = true;
   input.disabled = false;
   send.disabled = false;
   for (const button of examples) button.disabled = false;

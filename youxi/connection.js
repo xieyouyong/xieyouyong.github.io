@@ -1,8 +1,8 @@
-// Only the public endpoint is stored here. Credentials stay in page memory.
+// Public shared service; the DeepSeek API key is stored only in the Worker.
 const endpoint='https://youxi-rag-api.youyongxie.workers.dev';
 export function apiRequest(path,password,body,signal){
   return fetch(endpoint+path,{
-    method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${password}`},
+    method:'POST',headers:{'Content-Type':'application/json',...(password ? {Authorization:`Bearer ${password}`} : {})},
     body:JSON.stringify(body),signal,credentials:'omit',redirect:'error'
   });
 }

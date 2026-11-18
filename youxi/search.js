@@ -1,4 +1,4 @@
-import { modelRequest } from './connection.js?v=5';
+import { modelRequest } from './connection.js?v=6';
 // Shared access uses the Worker; personal API keys call DeepSeek directly.
 export async function planQuestion(question,history,connection,signal) {
   const fallback={localQueries:[question]};

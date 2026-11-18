@@ -1,7 +1,7 @@
-import { bindModelDialog } from '../assets/model-dialog.js?v=1';
+import { bindModelDialog } from '../assets/model-dialog.js?v=2';
 import { createRetriever, buildMessages, setAnswerPrompt } from './rag.js?v=6';
-import { planQuestion, searchWeb } from './search.js?v=5';
-import { apiRequest, modelRequest } from './connection.js?v=5';
+import { planQuestion, searchWeb } from './search.js?v=6';
+import { apiRequest, modelRequest } from './connection.js?v=6';
 const $ = id => document.getElementById(id);
 let retrieve, connection=null, controller=null, pendingQuestion='', history=[];
 const escape = s => String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -46,14 +46,14 @@ const settings = bindModelDialog({
   onConnection(value) {
     connection = value;
     if (retrieve) $('status').textContent = value
-      ? (value.mode === 'shared' ? '已连接最尾厝密钥' : '已配置自己的 API 密钥')
-      : '资料已就绪 · 可使用最尾厝密钥或自己的 API 密钥';
+      ? (value.mode === 'shared' ? '免费问答已就绪 · 直接输入问题即可' : '已配置自己的 API 密钥')
+      : '免费问答已就绪 · 直接输入问题即可';
   },
   onLogin() {
     if (pendingQuestion) {const question=pendingQuestion;pendingQuestion='';ask(question);}
   },
 });
-$('settings').addEventListener('close',()=>{pendingQuestion='';});
+$('settings')?.addEventListener('close',()=>{pendingQuestion='';});
 $('stop').onclick=()=>controller?.abort();
 $('question-form').onsubmit=e=>{e.preventDefault();ask($('question').value.trim());};
 $('question').onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();if(!$('send').disabled) $('question-form').requestSubmit();}};
@@ -135,7 +135,7 @@ try{
   if(!response.ok||!promptResponse.ok)throw new Error();
   const corpus=await response.json();setAnswerPrompt(await promptResponse.text());
   if(!Array.isArray(corpus.chunks)||!corpus.chunks.length)throw new Error();retrieve=createRetriever(corpus.chunks);
-  $('send').disabled=false;$('status').textContent=connection ? '已恢复模型连接' : '资料已就绪 · 可使用最尾厝密钥或自己的 API 密钥';
+  $('send').disabled=false;$('status').textContent='免费问答已就绪 · 直接输入问题即可';
 }catch{
   $('status').textContent='方言资料或回答规则加载失败，请刷新页面。';$('question').disabled=true;
 }

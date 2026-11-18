@@ -1,5 +1,5 @@
-import {searchWeb} from "../youxi/search.js?v=5";
-import {apiRequest} from "../youxi/connection.js?v=5";
+import {searchWeb} from "../youxi/search.js?v=6";
+import {apiRequest} from "../youxi/connection.js?v=6";
 
 export const fluxPublic = (() => {
   const ids = "CN-Aro CN-BeO CN-Dda CN-Din CN-Dsh CN-Du2 CN-Dzo CN-HaM CN-Jng CN-Lch CN-Xi2 CN-YaS CN-You CN-Yuc".split(" ");
@@ -99,8 +99,9 @@ export const fluxPublic = (() => {
       });
     if (!response.ok) {
       const json = await response.json().catch(() => null);
-      throw new Error((json?.error?.message || (typeof json?.error === "string" && json.error) || "API 请求失败（HTTP " + response.status + "）")
-        .replaceAll(connection.credential, "•••").slice(0, 300));
+      const message = json?.error?.message || (typeof json?.error === "string" && json.error) ||
+        "API 请求失败（HTTP " + response.status + "）";
+      throw new Error((connection.credential ? message.replaceAll(connection.credential, "•••") : message).slice(0, 300));
     }
     if (!streaming) return (await response.json()).choices?.[0]?.message?.content?.trim() || "";
     const reader = response.body.getReader();
