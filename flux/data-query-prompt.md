@@ -8,4 +8,5 @@
 - series 可用 dat_variables、raw_variables 或原始列名。默认先查 DAT，所需站点、变量或时段没有有效 DAT 再查已发布的半小时原始文件。气温是 temp，降水是 precip，气压是 press，其他变量按给出的字段名。plan.periods 是 [{"start":"YYYY-MM-DD","end":"YYYY-MM-DD"}] 数组，每个区间含开始且不含结束。“2020 年 7 月和 8 月”拆成两段。“2008 年和 2011 年 7 月”指两年的 7 月，分开查询。北半球夏季未另行定义时用 6 月 1 日至 9 月 1 日。无时间限制就省略 periods，让工具用文件覆盖范围。“绘制”“同图”“柱状图”等应设 plot=true。逐月叠画用 month_aligned=true。双 y 轴用 dual_axis=true，柱状图用 mark="bar"。不同站点、变量和时段都放进同一个计划。
 - 用户只要原始半小时文件时设 raw=true、raw_only=true。若同时要原始数据和质控 DAT，设 raw=true、raw_only=false。“指控前后”通常是“质控前后”。明确点名某个列（例如 TA_F、TA_F_MDS、VPD_F），在 columns 数组中填写准确列名；如果未点名，只填 variables。气温等变量的原始列优先级由工具按 _F、无后缀、其他后缀决定。仅 raw_sites 有半小时文件，具体年份由工具验证。目录仍能报告 Source_done。
 - map 支持 projection="lambert"、extent=[西经度,南纬度,东经度,北纬度]（使用带符号的十进制度，例如中国区域 [70,10,140,60]）、point_color="#rrggbb"、point_radius、point_opacity。默认裁剪到站点范围。用户要求全球底图时才用 worldwide=true。用户要求修改已有地图外观时沿用原范围和其他属性。
+- 涉及逐时配对计算时使用 series。comparisons 可填 ["pearson"]（Pearson 相关系数）或 ["difference"]（差值）。同站两个变量填一个站和两个变量，不同站同变量填两个站和一个变量。只有明确要求绘图时设 plot=true，相关系数绘图使用散点图。逐日气温统计可用 daily 数组，值为 max、min 或 range。
 - 只输出 JSON。图表由浏览器根据真正查询到的记录生成。不要把观测数据内容或推测的数值写到计划里。

@@ -1,4 +1,4 @@
-import {fluxPublic} from "./public-data.js?v=10";
+import {fluxPublic} from "./public-data.js?v=11";
 import {bindModelDialog} from "../assets/model-dialog.js?v=3";
 
 const form = document.querySelector("#ask");
@@ -99,7 +99,7 @@ function renderChart(chart, parent) {
     mark: item.mark || "line",
     color: palette[i % palette.length],
     dash: [[], [7, 3], [2, 3]][Math.floor(i / palette.length) % 3],
-    points: item.points.map(([stamp, value]) => ({stamp, t: parse(stamp), value})),
+    points: item.points.map(([x, value, stamp]) => chart.x_axis ? {stamp, t: x, value} : {stamp: x, t: parse(x), value}),
     gaps: item.gaps.map(([from, to]) => [parse(from), parse(to)]),
   }));
   const points = lines.flatMap(line => line.points);
@@ -113,14 +113,15 @@ function renderChart(chart, parent) {
   });
   const t0 = points.reduce((v, p) => Math.min(v, p.t), Infinity);
   const t1 = points.reduce((v, p) => Math.max(v, p.t), -Infinity);
-  const day = t => chart.month_aligned ? new Date(t).getUTCDate() + " 日" : new Date(t).toISOString().slice(0, 10);
+  const day = t => chart.x_axis ? String(Number(t.toPrecision(5))) : chart.month_aligned ? new Date(t).getUTCDate() + " 日" : new Date(t).toISOString().slice(0, 10);
   const title = [chart.design_title && answerBrand(chart.design_title), chart.label + (chart.unit ? " (" + chart.unit + ")" : ""), chart.kind, chart.period]
     .filter(Boolean).join(" · ");
   canvas.setAttribute("role", "img");
-  canvas.setAttribute("aria-label", chart.label + "时间序列：" + lines.map(line => line.site).join("、")
+  canvas.setAttribute("aria-label", chart.label + (chart.x_axis ? "：" : "时间序列：") + lines.map(line => line.site).join("、")
     + (chart.period ? " · " + chart.period : ""));
   const caption = document.createElement("figcaption");
-  const defaultCaption = "移动指针查看各站点数值";
+  const defaultCaption = chart.x_axis ? "横轴 " + chart.x_axis.label + (chart.x_axis.unit ? "（" + chart.x_axis.unit + "）" : "") +
+    " · 纵轴 " + axes[0].label + (axes[0].unit ? "（" + axes[0].unit + "）" : "") : "移动指针查看各站点数值";
   caption.textContent = defaultCaption;
   const download = document.createElement("button");
   download.className = "outline chart-download";
@@ -191,7 +192,9 @@ function renderChart(chart, parent) {
       }
     }
     ctx.textAlign = "center";
-    for (const {time, label} of timeTicks(t0, t1, right - left, chart.month_aligned)) {
+    const ticks = chart.x_axis ? (t0 === t1 ? [t0] : Array.from({length: 5}, (_, i) => t0 + i * (t1 - t0) / 4))
+      .map(time => ({time, label: day(time)})) : timeTicks(t0, t1, right - left, chart.month_aligned);
+    for (const {time, label} of ticks) {
       const x = px(time);
       ctx.beginPath();
       ctx.moveTo(x, top);
@@ -214,6 +217,11 @@ function renderChart(chart, parent) {
       let previous;
       let gapIndex = 0;
       for (const point of line.points) {
+        if (line.mark === "point") {
+          ctx.moveTo(px(point.t) + 2, py(point.value, axis));
+          ctx.arc(px(point.t), py(point.value, axis), 2, 0, 2 * Math.PI);
+          continue;
+        }
         if (line.mark === "bar") {
           const barWidth = Math.max(1, Math.min(18, (right - left) / line.points.length * .85));
           const y = py(point.value, axis);
@@ -226,6 +234,10 @@ function renderChart(chart, parent) {
         if (!previous || crossesGap) ctx.moveTo(px(point.t), py(point.value, axis));
         else ctx.lineTo(px(point.t), py(point.value, axis));
         previous = point;
+      }
+      if (line.mark === "point") {
+        ctx.fill();
+        continue;
       }
       ctx.stroke();
       if (line.points.length === 1 || (timestamp !== null &&
@@ -672,6 +684,39 @@ function showReply(reply, result) {
     } catch {
       reply.append(document.createTextNode("\n图表无法显示，以上为查询结果。"));
     }
+  }
+  if (result.calculation_plan) {
+    const download = document.createElement("button");
+    download.type = "button";
+    download.className = "outline chart-download";
+    download.textContent = "下载计算输入（CSV）";
+    reply.append(download);
+    download.addEventListener("click", async () => {
+      download.disabled = true;
+      try {
+        const inputs = await fluxPublic.calculationInputs(result.calculation_plan, AbortSignal.timeout(210000));
+        if (!inputs.length) throw new Error("没有原始记录");
+        const quote = value => '"' + String(value).replaceAll('"', '""') + '"';
+        const parts = ["\uFEFFTIMESTAMP_UTC,SITE_ID,VARIABLE,UNIT,VALUE,SOURCE\r\n"];
+        for (const {site, column, unit, file, points} of inputs) {
+          const descriptor = [site, column, unit].map(quote).join(",");
+          const source = quote(file.split("/").at(-1));
+          parts.push(points.map(([time, value]) => new Date(time).toISOString() + "," +
+            descriptor + "," + value + "," + source + "\r\n").join(""));
+        }
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(new Blob(parts, {type: "text/csv;charset=utf-8"}));
+        link.href = url;
+        link.download = "FLUXNET_计算输入.csv";
+        link.click();
+        setTimeout(() => URL.revokeObjectURL(url), 30000);
+        download.textContent = "下载计算输入（CSV）";
+      } catch {
+        download.textContent = "下载失败，点击重试";
+      } finally {
+        download.disabled = false;
+      }
+    });
   }
   if (result.model_used) {
     const details = document.createElement("details");

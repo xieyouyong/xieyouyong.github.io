@@ -38,6 +38,7 @@ export const fluxPublic = (() => {
     codes.split(" ").map(code => [code, region])));
   const paths = new Map(ids.map(id => [id, "./data/dat/" + id + ".dat"]));
   const dataCache = new Map();
+  const calculationCache = new WeakMap();
   let catalog, countries, coastlines, loading, prompts;
 
   async function read(path, signal) {
@@ -154,6 +155,11 @@ export const fluxPublic = (() => {
     const regionsAsked = Object.keys(regions).filter(name => question.includes(name) ||
       (name.endsWith("洲") && name.length > 2 && question.includes(name.slice(0, -1))));
     const selected = Object.keys(fields).filter(key => fields[key][2].test(question) || columns.some(column => family(column) === key));
+    const variablePosition = key => {
+      const position = question.search(fields[key][2]);
+      return position < 0 ? Infinity : position;
+    };
+    selected.sort((a, b) => variablePosition(a) - variablePosition(b));
     const raw = /原始|半小时|质控前|指控前/.test(question);
     const rawOnly = raw && !/质控后|指控后|质控前后|指控前后|\bDAT\b/i.test(question);
     const map = /地图|空间分布|站点分布|Lambert|兰伯特/i.test(question);
@@ -168,9 +174,9 @@ export const fluxPublic = (() => {
     const comparisons = [];
     if (!daily && /差值|温差|气温差|相减|减去|做差|作差|之差|difference/i.test(question)) comparisons.push("difference");
     if (/相关系数|\bPearson\b/i.test(question) && !/Spearman|Kendall|斯皮尔曼|肯德尔/i.test(question)) comparisons.push("pearson");
-    const paired = comparisons.length && (sites.length >= 2 || previous?.sites?.length === 2);
+    const paired = comparisons.length > 0;
     const inheritPair = paired && previous?.tool === "series" &&
-      (!sites.length || sites.length === 2 && sites.every(site => previous.sites.includes(site)));
+      (!sites.length || sites.length === previous.sites.length && sites.every(site => previous.sites.includes(site)));
     const series = !map && (paired || daily || ((!metadata || draw) &&
       (selected.length || columns.length || raw || (draw && sites.length && previous?.tool === "series"))));
     const mapEdit = previous?.tool === "map" && !sites.length && !countryCodes.length && !regionsAsked.length &&
@@ -185,7 +191,7 @@ export const fluxPublic = (() => {
       columns: daily ? columns.filter(column => family(column) === "temp") :
         inheritPair && !selected.length && !columns.length ? previous.columns || [] : columns,
       comparisons: paired ? comparisons : [],
-      daily: daily ? metrics : [], plot: Boolean(draw || daily), raw: Boolean(raw), raw_only: rawOnly,
+      daily: daily ? metrics : [], plot: Boolean(draw), raw: Boolean(raw), raw_only: rawOnly,
       dual_axis: /双\s*[yYＹ]\s*轴/.test(question), mark: /柱状|柱形/.test(question) ? "bar" : undefined,
       sort: /最高/.test(question) ? "desc" : /最低/.test(question) ? "asc" : undefined,
       list: /清单|分别|列出|哪些/.test(question), group: /按国家/.test(question) ? "country" : undefined};
@@ -254,7 +260,7 @@ export const fluxPublic = (() => {
         .filter(item => item && date(item.start) && date(item.end) && item.end > item.start)
         .map(({start, end}) => ({start, end})),
       daily: [...new Set(strings(plan.daily).filter(metric => Object.hasOwn(dailyLabels, metric)))],
-      comparisons: plan.tool === "series" ? strings(plan.comparisons).filter(kind => kind === "difference" || kind === "pearson") : [],
+      comparisons: plan.tool === "series" ? [...new Set(strings(plan.comparisons).filter(kind => kind === "difference" || kind === "pearson"))] : [],
       raw: plan.raw === true, raw_only: plan.raw_only === true, plot: plan.plot === true,
       dual_axis: plan.dual_axis === true, month_aligned: plan.month_aligned === true,
       mark: plan.mark === "bar" ? "bar" : undefined,
@@ -418,8 +424,11 @@ export const fluxPublic = (() => {
     return [...days];
   }
 
-  function pairedResults(left, right, axis, comparisons, stamp, mark) {
-    const legend = left.site + " − " + right.site;
+  function pairedResults(left, right, plan, stamp) {
+    const sameSite = left.site === right.site;
+    const leftLabel = sameSite ? left.label : left.site;
+    const rightLabel = sameSite ? right.label : right.site;
+    const legend = leftLabel + " − " + rightLabel;
     const rightValues = new Map(right.points);
     const pairs = [];
     for (const [time, value] of left.points) {
@@ -427,16 +436,20 @@ export const fluxPublic = (() => {
       pairs.push([time, value, rightValues.get(time)]);
       rightValues.delete(time);
     }
-    if (!pairs.length) return {text: left.site + " 和 " + right.site + " 在该时段没有时间戳相同的有效" + axis.label + "记录。"};
+    const subject = sameSite ? left.site + " " + left.label + "与" + right.label :
+      left.site + " 与 " + right.site + "的" + left.label;
+    if (!pairs.length) return {text: subject + "在该时段没有时间戳相同的有效记录。"};
 
     const count = pairs.length;
     const [sumLeft, sumRight] = pairs.reduce(([x, y], [, a, b]) => [x + a, y + b], [0, 0]);
     const meanLeft = sumLeft / count;
     const meanRight = sumRight / count;
     const interval = stamp(pairs[0][0]) + " 至 " + stamp(pairs.at(-1)[0]) + "（UTC）";
-    const lines = ["**" + axis.label + "**　" + left.site + " 与 " + right.site + " 共 " + count + " 对有效记录，覆盖 " + interval + "。"];
-    let chart;
-    if (comparisons.includes("difference")) {
+    const lines = ["**" + subject + "**　共 " + count + " 对有效记录，覆盖 " + interval + "。"];
+    const charts = [];
+    if (plan.comparisons.includes("difference") && left.unit !== right.unit) {
+      lines.push("两组观测的单位分别为 " + left.unit + " 和 " + right.unit + "，请指定单位相同的序列计算差值。");
+    } else if (plan.comparisons.includes("difference")) {
       let min = Infinity, max = -Infinity, sum = 0;
       const gaps = [];
       const step = Math.max(left.step, right.step);
@@ -448,16 +461,16 @@ export const fluxPublic = (() => {
         if (i && time - pairs[i - 1][0] > step) gaps.push([stamp(pairs[i - 1][0]), stamp(time)]);
         return [time, difference];
       });
-      const label = axis.label + "差值";
-      const unit = axis.unit ? " " + axis.unit : "";
+      const label = (sameSite ? legend : left.label) + "差值";
+      const unit = left.unit ? " " + left.unit : "";
       const format = value => Number(value.toFixed(4)) + unit;
       lines.push("**" + legend + "** 的平均差值为 " + format(sum / count) +
         "，范围为 " + format(min) + " 至 " + format(max) + "。");
-      chart = {label, unit: axis.unit, kind: "同一时间戳配对 · UTC", axes: [{label, unit: axis.unit}],
-        series: [{legend, axis: 0, mark: mark || "line", gaps,
-          points: thin(values).map(([time, value]) => [stamp(time), Number(value.toFixed(8))])}]};
+      if (plan.plot) charts.push({label, unit: left.unit, kind: "同一时间戳配对 · UTC", axes: [{label, unit: left.unit}],
+        series: [{legend, axis: 0, mark: plan.mark || "line", gaps,
+          points: thin(values).map(([time, value]) => [stamp(time), Number(value.toFixed(8))])}]});
     }
-    if (comparisons.includes("pearson")) {
+    if (plan.comparisons.includes("pearson")) {
       let covariance = 0, varianceLeft = 0, varianceRight = 0;
       for (const [, a, b] of pairs) {
         const x = a - meanLeft, y = b - meanRight;
@@ -473,16 +486,24 @@ export const fluxPublic = (() => {
         lines.push("**Pearson 相关系数 r = " + coefficient.toFixed(4) + "**。");
       }
     }
-    return {text: lines.join("\n\n"), chart};
+    if (plan.plot && plan.comparisons.includes("pearson")) {
+      const stride = Math.ceil(count / 4000);
+      const plotted = stride === 1 ? pairs : pairs.filter((_, index) => index % stride === 0 || index === count - 1);
+      charts.push({label: leftLabel + "与" + rightLabel + "的散点图", kind: "同一时间戳配对 · UTC",
+        period: plotted.length === count ? interval : interval + " · 显示 " + plotted.length + " / " + count + " 对", x_axis: {label: leftLabel, unit: left.unit},
+        axes: [{label: rightLabel, unit: right.unit}],
+        series: [{legend: subject, axis: 0, mark: "point", gaps: [], points: plotted.map(([time, x, y]) => [x, y, stamp(time)])}]});
+    }
+    return {text: lines.join("\n\n"), charts};
   }
 
-  async function seriesAnswer(plan, signal) {
+  async function seriesAnswer(plan, signal, inputsOnly = false) {
     if (!plan.sites.length) return {text: "请指定要查询的站点。", evidence: "未指定站点。"};
-    if (plan.comparisons.length && plan.sites.length !== 2) {
-      return {text: "请指定参与配对计算的两个站点。"};
-    }
     const query = [...plan.columns.map(column => ({key: family(column) || column, column})),
       ...plan.variables.filter(key => !plan.columns.some(column => family(column) === key)).map(key => ({key}))];
+    if (plan.comparisons.length && !(plan.sites.length === 2 && query.length || plan.sites.length === 1 && query.length === 2)) {
+      return {text: "请指定两组观测，例如同一站的两个变量，或两个站的同一个变量。"};
+    }
     if (!query.length) {
       availability ||= JSON.parse(await read('./data/availability.json', signal));
       const stationData = plan.sites.slice(0, 14).map(site => stationAvailability(site, catalog, availability));
@@ -494,7 +515,8 @@ export const fluxPublic = (() => {
       start: range.start ? Date.parse(range.start) : -Infinity, end: range.end ? Date.parse(range.end) : Infinity,
       label: range.start ? range.start.slice(0, 7) : "可用时段",
     }));
-    const notices = [], series = [], stats = [], fulfilled = new Set(), observations = new Map();
+    const notices = [], series = [], stats = [], fulfilled = new Set(), observations = new Map(), inputs = [];
+    const calculating = plan.comparisons.length || plan.daily.length;
     const requestKey = (site, index, range) => [site, index, range.start, range.end].join('|');
     const stamp = time => new Date(time).toISOString().slice(0, 16);
     const within = (points, range) => points.filter(([time]) => time >= range.start && time < range.end);
@@ -513,13 +535,6 @@ export const fluxPublic = (() => {
       const record = rawIndex[site];
       const source = raw ? record.source : paths.get(site);
       const step = metric ? dayMs : raw ? 1800000 : 3600000;
-      if (plan.comparisons.length) {
-        if (!observations.has(key)) {
-          observations.set(key, {site, points, step});
-          stats.push({site, kind, source, ...(raw && {citation: record.citation})});
-        }
-        return;
-      }
       const gaps = [];
       let min = Infinity, max = -Infinity, sum = 0;
       points.forEach(([time, value], i) => {
@@ -540,7 +555,22 @@ export const fluxPublic = (() => {
     }
 
     function addObservations(site, index, range, points, rawColumn) {
-      if (plan.comparisons.length || !plan.daily.length) {
+      if (calculating) {
+        const key = requestKey(site, index, range);
+        if (plan.comparisons.length && observations.has(key)) return;
+        const file = rawColumn ? rawIndex[site].source : paths.get(site);
+        const input = {site, ...axes[index], column: rawColumn || query[index].key, file,
+          step: rawColumn ? 1800000 : 3600000, points};
+        inputs.push(input);
+        if (plan.comparisons.length) {
+          observations.set(key, input);
+          fulfilled.add(key);
+          stats.push({site, kind: rawColumn ? "FLUXNET 半小时" : "质控逐小时 DAT", source: file,
+            citation: rawColumn && rawIndex[site].citation});
+        }
+      }
+      if (inputsOnly || plan.comparisons.length) return;
+      if (!plan.daily.length) {
         addSeries(site, index, range, points, rawColumn);
         return;
       }
@@ -586,6 +616,7 @@ export const fluxPublic = (() => {
           (names.length ? " 的 FLUXNET 半小时数据无有效值。" : " 在原始 CSV 中没有匹配的字段。"));
       }
     }
+    if (inputsOnly) return {inputs};
     const makeChart = (items, indexes) => ({label: plan.daily.length ? "逐日气温统计" : indexes.map(index => axes[index].label).join(" / "),
       unit: indexes.length === 1 ? axes[indexes[0]].unit : "", kind: [...new Set(items.map(item => item.kind))].join(" + ") + " · UTC",
       axes: indexes.map(index => axes[index]), month_aligned: plan.month_aligned && ranges.length > 1,
@@ -593,17 +624,20 @@ export const fluxPublic = (() => {
     const available = query.map((_, index) => index).filter(index => series.some(item => item.index === index));
     const comparisons = [];
     if (plan.comparisons.length) {
-      const [first, second] = stationIds;
-      for (const [index, axis] of axes.entries()) {
+      const [first, second = first] = stationIds;
+      const pairs = first === second ? [[0, 1]] : axes.map((_, index) => [index, index]);
+      for (const [leftIndex, rightIndex] of pairs) {
         for (const range of ranges) {
-          const left = observations.get(requestKey(first, index, range));
-          const right = observations.get(requestKey(second, index, range));
-          comparisons.push(left && right ? pairedResults(left, right, axis, plan.comparisons, stamp, plan.mark) :
-            {text: (left ? second : right ? first : first + " 和 " + second) + " 在" + range.label + "缺少有效" + axis.label + "记录，无法配对。"});
+          const left = observations.get(requestKey(first, leftIndex, range));
+          const right = observations.get(requestKey(second, rightIndex, range));
+          const missing = [[left, first, leftIndex], [right, second, rightIndex]]
+            .filter(([input]) => !input).map(([, site, index]) => site + " " + axes[index].label);
+          comparisons.push(missing.length ? {text: missing.join("、") + " 在" + range.label + "缺少有效观测，无法配对。"} :
+            pairedResults(left, right, plan, stamp));
         }
       }
     }
-    const charts = plan.comparisons.length ? comparisons.flatMap(result => result.chart ? [result.chart] : []) :
+    const charts = plan.comparisons.length ? comparisons.flatMap(result => result.charts || []) :
       plan.plot && series.length ? plan.dual_axis && available.length === 2 ? [makeChart(series, available)] :
       available.map(index => makeChart(series.filter(item => item.index === index), [index])) : [];
     const report = plan.comparisons.length ? comparisons.map(result => result.text) : stats.map(s => "- " + s.site + " · " + s.label + " · " + s.start + " 至 " + s.end +
@@ -621,9 +655,11 @@ export const fluxPublic = (() => {
       availability ||= JSON.parse(await read('./data/availability.json', signal));
       stationData = missingSites.map(site => stationAvailability(site, catalog, availability));
     }
-    const dailyMethod = plan.daily.length && stats.length ?
+    if (inputs.length) calculationCache.set(plan, inputs);
+    const dailyMethod = !plan.comparisons.length && plan.daily.length && stats.length ?
       "按 UTC 日期对有效气温记录取日最高值、日最低值，日较差为两者之差。" : "";
     return {text: [dailyMethod, ...notices, report.join(plan.comparisons.length ? "\n\n" : "\n")].filter(Boolean).join("\n\n"), chart: charts[0], other_charts: charts.slice(1),
+      ...(inputs.length && {calculation_plan: plan}),
       source_text: sources.length ? ["**数据来源**　" + sources.join("、") + "。", ...attribution].join("\n\n") : "",
       availability_text: formatAvailability(stationData),
       evidence: {stats, notices, ...(dailyMethod && {daily_method: dailyMethod}), station_availability: stationData.map(({site_id, name, sources}) => ({site_id, name,
@@ -795,7 +831,7 @@ export const fluxPublic = (() => {
       plan.tool === "map" ? await mapAnswer(plan, selectCatalog(plan), signal) :
         catalogAnswer(plan, selectCatalog(plan));
     let summary = result.text, modelUsed = false;
-    if (connection && !modelError && !plan.comparisons.length) {
+    if (connection && !modelError && !plan.comparisons.length && !plan.daily.length) {
       progress("正在生成回答…");
       try {
         const [, prompt] = await prompts;
@@ -834,5 +870,13 @@ export const fluxPublic = (() => {
     return {id, longitude, latitude, igbp, source_done};
   }
 
-  return {ask, connect, load, mapStationDetails};
+  async function calculationInputs(plan, signal) {
+    const cached = calculationCache.get(plan);
+    if (cached) return cached;
+    await load();
+    const result = await seriesAnswer(normalize(plan), signal, true);
+    return result.inputs || [];
+  }
+
+  return {ask, connect, load, mapStationDetails, calculationInputs};
 })();
