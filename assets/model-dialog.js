@@ -1,6 +1,5 @@
-// Temporary free access: credentials remain exclusively in the Worker.
-// Personal-key UI can be restored from Git when this period ends.
-const sharedConnection = Object.freeze({mode: 'shared', credential: '', model: '', searchKey: ''});
+import {publicConnection as sharedConnection} from './public-model.js?v=1';
+// Automatic direct connection; no manual model setup.
 export function bindModelDialog({onConnection}) {
   // Discard credentials from the former manual connection flow.
   try { sessionStorage.removeItem('zuowei-model-connection'); } catch {}

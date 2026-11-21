@@ -1,7 +1,7 @@
-import { bindModelDialog } from '../assets/model-dialog.js?v=2';
+import { bindModelDialog } from '../assets/model-dialog.js?v=3';
 import { createRetriever, buildMessages, setAnswerPrompt } from './rag.js?v=6';
-import { planQuestion, searchWeb } from './search.js?v=6';
-import { apiRequest, modelRequest } from './connection.js?v=6';
+import { planQuestion, searchWeb } from './search.js?v=7';
+import { apiRequest, modelRequest } from './connection.js?v=7';
 const $ = id => document.getElementById(id);
 let retrieve, connection=null, controller=null, pendingQuestion='', history=[];
 const escape = s => String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -45,9 +45,7 @@ const settings = bindModelDialog({
   },
   onConnection(value) {
     connection = value;
-    if (retrieve) $('status').textContent = value
-      ? (value.mode === 'shared' ? '免费问答已就绪 · 直接输入问题即可' : '已配置自己的 API 密钥')
-      : '免费问答已就绪 · 直接输入问题即可';
+    if (retrieve) $('status').textContent = '免费问答已就绪 · 直接输入问题即可';
   },
   onLogin() {
     if (pendingQuestion) {const question=pendingQuestion;pendingQuestion='';ask(question);}

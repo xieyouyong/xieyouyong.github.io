@@ -1,5 +1,4 @@
-import {searchWeb} from "../youxi/search.js?v=6";
-import {apiRequest} from "../youxi/connection.js?v=6";
+import {searchWeb} from "../youxi/search.js?v=7";
 import {stationAvailability, formatAvailability} from "./availability.js?v=1";
 
 export const fluxPublic = (() => {
@@ -90,13 +89,12 @@ export const fluxPublic = (() => {
 
   async function completion(connection, messages, signal, options = {}) {
     const {onDelta, ...parameters} = options;
-    const shared = connection.mode === "shared";
-    const streaming = shared || Boolean(onDelta);
-    const response = shared ? await apiRequest("/chat", connection.credential, {messages}, signal) :
-      await fetch("https://api.deepseek.com/chat/completions", {
+
+    const streaming = Boolean(onDelta);
+    const response = await fetch("https://api.deepseek.com/chat/completions", {
         method: "POST", signal, credentials: "omit", redirect: "error",
         headers: {"Content-Type": "application/json", Authorization: "Bearer " + connection.credential},
-        body: JSON.stringify({model: connection.model, messages, stream: streaming, ...parameters}),
+        body: JSON.stringify({model: connection.model, messages, stream: streaming, thinking: {type: "disabled"}, ...parameters}),
       });
     if (!response.ok) {
       const json = await response.json().catch(() => null);
@@ -135,12 +133,6 @@ export const fluxPublic = (() => {
   }
 
   async function connect(connection, signal) {
-    if (connection.mode === "shared") {
-      const response = await apiRequest("/auth", connection.credential, {}, signal);
-      const body = await response.json();
-      if (!response.ok || !body.ok) throw new Error(body.error || "最尾厝密钥验证失败。");
-      return;
-    }
     const reply = await completion(connection, [
       {role: "user", content: "只回复 OK。"},
     ], signal, {thinking: {type: "disabled"}, max_tokens: 16});
