@@ -156,7 +156,7 @@ export const fluxPublic = (() => {
     const selected = Object.keys(fields).filter(key => fields[key][2].test(question) || columns.some(column => family(column) === key));
     const raw = /原始|半小时|质控前|指控前/.test(question);
     const rawOnly = raw && !/质控后|指控后|质控前后|指控前后|\bDAT\b/i.test(question);
-    const map = /地图|空间分布|Lambert|兰伯特/i.test(question);
+    const map = /地图|空间分布|站点分布|Lambert|兰伯特/i.test(question);
     const draw = /绘制|画|图|曲线/.test(question);
     const metadata = /来源|经纬度|经度|纬度|海拔|植被|土壤|几个|多少|清单|位置|最高|最低/.test(question);
     const metrics = dailyTemperature(question);
@@ -664,7 +664,7 @@ export const fluxPublic = (() => {
         if (!["catalog","map","series"].includes(proposed?.tool)) throw new Error("查询计划缺少有效操作。");
         const explicitPlot = plan.tool === "series" && plan.plot && sites.length &&
           (plan.variables.length || columns.length);
-        const planned = normalize(proposed);
+        const planned = normalize(plan.tool === "map" && proposed.tool !== "map" ? plan : proposed);
         if (plan.tool === "series" && plan.daily?.length) {
           if (!plan.sites.length && planned.tool === "series") plan.sites = planned.sites;
           if (!plan.periods.length && planned.tool === "series") plan.periods = planned.periods;
@@ -726,5 +726,22 @@ export const fluxPublic = (() => {
       context: {publicPlan: plan, publicQuestion: question}};
   }
 
-  return {ask, connect, load};
+  async function mapStationDetails(id) {
+    await load();
+    const station = catalog.find(row => row.id === id);
+    if (!station) throw new Error("站点目录中没有此站。");
+    availability ||= JSON.parse(await read("./data/availability.json"));
+    const published = Object.entries(availability.sites[id] || {}).flatMap(([kind, source]) => {
+      const columns = Object.values(source.columns);
+      if (!columns.length) return [];
+      const start = columns.map(column => column.start).sort()[0];
+      const end = columns.map(column => column.end).sort().at(-1);
+      return [{label: kind === "dat" ? "DAT 有效跨度" : "原始 CSV 有效跨度",
+        value: start.replace("T", " ") + " 至 " + end.replace("T", " ") + "（UTC）"}];
+    });
+    return {longitude: station.longitude, latitude: station.latitude, published,
+      catalogSpan: station.source_done || station.source_all};
+  }
+
+  return {ask, connect, load, mapStationDetails};
 })();

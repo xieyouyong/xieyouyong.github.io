@@ -1,4 +1,4 @@
-import {fluxPublic} from "./public-data.js?v=7";
+import {fluxPublic} from "./public-data.js?v=8";
 import {bindModelDialog} from "../assets/model-dialog.js?v=3";
 
 const form = document.querySelector("#ask");
@@ -282,9 +282,15 @@ function renderStationMap(map, parent) {
   canvas.setAttribute("role", "img");
   canvas.setAttribute("aria-label", map.title);
   caption.textContent = map.projection + " · 海岸线 Natural Earth 1:110m";
+  let drawnPoints = [], selectedId;
   download.type = "button";
   download.className = "outline chart-download";
   download.textContent = "下载 PNG";
+  caption.append(document.createElement("br"));
+  const stationInfo = document.createElement("span");
+  stationInfo.setAttribute("aria-live", "polite");
+  stationInfo.textContent = "点击站点或其附近查看数据跨度。";
+  caption.append(stationInfo);
   figure.append(canvas, caption, download);
   parent.append(figure);
 
@@ -338,11 +344,24 @@ function renderStationMap(map, parent) {
     ctx.fillStyle = color;
     ctx.globalAlpha = opacity;
     ctx.beginPath();
-    for (const [, x, y] of map.points) {
-      ctx.moveTo(px(x) + radius, py(y));
-      ctx.arc(px(x), py(y), radius, 0, 2 * Math.PI);
+    const screenPoints = map.points.map(([id, x, y]) => [id, px(x), py(y)]);
+    for (const [, x, y] of screenPoints) {
+      ctx.moveTo(x + radius, y);
+      ctx.arc(x, y, radius, 0, 2 * Math.PI);
     }
     ctx.fill();
+    if (target === canvas) {
+      drawnPoints = screenPoints;
+      const selected = screenPoints.find(([id]) => id === selectedId);
+      if (selected) {
+        ctx.globalAlpha = 1;
+        ctx.strokeStyle = "#247452";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(selected[1], selected[2], radius + 4, 0, 2 * Math.PI);
+        ctx.stroke();
+      }
+    }
     ctx.restore();
     ctx.fillStyle = "#4d6660";
     ctx.strokeStyle = "#84918a";
@@ -376,6 +395,35 @@ function renderStationMap(map, parent) {
     if (canvas.clientWidth) paint(canvas, canvas.clientWidth, 420, window.devicePixelRatio || 1);
   }
   canvas.style.height = "420px";
+  canvas.addEventListener("click", async event => {
+    const rect = canvas.getBoundingClientRect();
+    const x = event.clientX - rect.left - canvas.clientLeft;
+    const y = event.clientY - rect.top - canvas.clientTop;
+    let nearest, distance = Math.max(16, (map.style?.point_radius || 2) + 5);
+    for (const [id, px, py] of drawnPoints) {
+      const offset = Math.hypot(x - px, y - py);
+      if (offset < distance) {
+        nearest = id;
+        distance = offset;
+      }
+    }
+    if (!nearest) return;
+    selectedId = nearest;
+    draw();
+    stationInfo.textContent = "SITE_ID：" + nearest + " · 正在读取站点信息…";
+    try {
+      const station = await fluxPublic.mapStationDetails(nearest);
+      if (selectedId !== nearest) return;
+      const spans = station.published.length ? station.published :
+        [{label: "目录登记跨度", value: station.catalogSpan || "未记录"}];
+      stationInfo.textContent = "SITE_ID：" + nearest + " · 经度 " + station.longitude + "° · 纬度 " + station.latitude + "°";
+      for (const {label, value} of spans) {
+        stationInfo.append(document.createElement("br"), label + "：" + value);
+      }
+    } catch {
+      if (selectedId === nearest) stationInfo.textContent = "SITE_ID：" + nearest + " · 站点信息读取失败，请重试。";
+    }
+  });
   new ResizeObserver(draw).observe(canvas);
   draw();
   download.addEventListener("click", () => {
