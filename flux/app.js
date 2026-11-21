@@ -1,4 +1,4 @@
-import {fluxPublic} from "./public-data.js?v=9";
+import {fluxPublic} from "./public-data.js?v=10";
 import {bindModelDialog} from "../assets/model-dialog.js?v=3";
 
 const form = document.querySelector("#ask");
