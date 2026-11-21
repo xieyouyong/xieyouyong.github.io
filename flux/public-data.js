@@ -139,6 +139,17 @@ export const fluxPublic = (() => {
     if (!reply) throw new Error("连接测试未收到可用回答。");
   }
 
+  const dailyLabels = {max: "日最高气温", min: "日最低气温", range: "日较差"};
+  const dayMs = 86400000;
+
+  function dailyTemperature(question) {
+    const metrics = [];
+    if (/(?:日|每天|每日)\s*(?:的\s*)?最高|最高气温/.test(question)) metrics.push("max");
+    if (/(?:日|每天|每日)\s*(?:的\s*)?(?:最高\s*[\/／、和及与或]\s*)?最低|最低气温/.test(question)) metrics.push("min");
+    if (/日较差|日温差/.test(question)) metrics.push("range");
+    return metrics;
+  }
+
   function fallback(question, previous, sites, countryCodes, columns) {
     const regionsAsked = Object.keys(regions).filter(name => question.includes(name) ||
       (name.endsWith("洲") && name.length > 2 && question.includes(name.slice(0, -1))));
@@ -148,7 +159,14 @@ export const fluxPublic = (() => {
     const map = /地图|空间分布|Lambert|兰伯特/i.test(question);
     const draw = /绘制|画|图|曲线/.test(question);
     const metadata = /来源|经纬度|经度|纬度|海拔|植被|土壤|几个|多少|清单|位置|最高|最低/.test(question);
-    const series = !map && !metadata && (selected.length || columns.length || raw || (draw && sites.length && previous?.tool === "series"));
+    const metrics = dailyTemperature(question);
+    const previousTemperature = previous?.tool === "series" &&
+      (previous.variables?.includes("temp") || previous.columns?.some(column => family(column) === "temp"));
+    const daily = metrics.length && (selected.includes("temp") || /日较差|日温差/.test(question) ||
+      (!selected.length && !columns.length && previousTemperature));
+    const inheritDaily = daily && previousTemperature && !countryCodes.length && !regionsAsked.length;
+    const series = !map && (daily || ((!metadata || draw) &&
+      (selected.length || columns.length || raw || (draw && sites.length && previous?.tool === "series"))));
     const mapEdit = previous?.tool === "map" && !sites.length && !countryCodes.length && !regionsAsked.length &&
       /颜色|散点|裁剪|范围|底图/.test(question);
     const continuation = !sites.length && !countryCodes.length && !regionsAsked.length &&
@@ -157,7 +175,9 @@ export const fluxPublic = (() => {
     const plan = {tool: map || mapEdit ? "map" : series ? "series" : "catalog",
       sites: sites.length ? sites : series ? previous?.sites || [] : scope.sites || [],
       countries: countryCodes.length ? countryCodes : scope.countries || [], continents: regionsAsked.length ? regionsAsked : scope.continents || [],
-      variables: selected.length ? selected : continuation ? previous?.variables || [] : [], columns, plot: Boolean(draw), raw: Boolean(raw), raw_only: rawOnly,
+      variables: daily ? ["temp"] : selected.length ? selected : continuation ? previous?.variables || [] : [],
+      columns: daily ? columns.filter(column => family(column) === "temp") : columns,
+      daily: daily ? metrics : [], plot: Boolean(draw || daily), raw: Boolean(raw), raw_only: rawOnly,
       dual_axis: /双\s*[yYＹ]\s*轴/.test(question), mark: /柱状|柱形/.test(question) ? "bar" : undefined,
       sort: /最高/.test(question) ? "desc" : /最低/.test(question) ? "asc" : undefined,
       list: /清单|分别|列出|哪些/.test(question), group: /按国家/.test(question) ? "country" : undefined};
@@ -180,7 +200,7 @@ export const fluxPublic = (() => {
         const year = dates[0][1];
         plan.periods = [{start: year + "-06-01", end: year + "-09-01"}];
       }
-      if (!dates.length && continuation && previous?.tool === "series") plan.periods = previous.periods || [];
+      if (!dates.length && (inheritDaily || continuation && previous?.tool === "series")) plan.periods = previous.periods || [];
       plan.month_aligned = plan.periods.length > 1 && /月/.test(question);
     }
     return plan;
@@ -225,6 +245,7 @@ export const fluxPublic = (() => {
       periods: (Array.isArray(plan.periods) ? plan.periods : []).slice(0, 12)
         .filter(item => item && date(item.start) && date(item.end) && item.end > item.start)
         .map(({start, end}) => ({start, end})),
+      daily: [...new Set(strings(plan.daily).filter(metric => Object.hasOwn(dailyLabels, metric)))],
       raw: plan.raw === true, raw_only: plan.raw_only === true, plot: plan.plot === true,
       dual_axis: plan.dual_axis === true, month_aligned: plan.month_aligned === true,
       mark: plan.mark === "bar" ? "bar" : undefined,
@@ -373,6 +394,21 @@ export const fluxPublic = (() => {
     return result;
   }
 
+  function dailyExtrema(points) {
+    const days = new Map();
+    for (const [time, value] of points) {
+      const day = Math.floor(time / dayMs) * dayMs;
+      const bounds = days.get(day);
+      if (bounds) {
+        bounds.min = Math.min(bounds.min, value);
+        bounds.max = Math.max(bounds.max, value);
+      } else {
+        days.set(day, {min: value, max: value});
+      }
+    }
+    return [...days];
+  }
+
   async function seriesAnswer(plan, signal) {
     if (!plan.sites.length) return {text: "请指定要查询的站点。", evidence: "未指定站点。"};
     const query = [...plan.columns.map(column => ({key: family(column) || column, column})),
@@ -397,29 +433,45 @@ export const fluxPublic = (() => {
       label: fields[key]?.[0] || column, unit: column && /(?:^|_)(?:QC|N|COUNT)(?:_|$)/.test(column) ? "" : fields[key]?.[1] || "",
     }));
 
-    function addSeries(site, index, range, points, rawColumn) {
+    function addSeries(site, index, range, points, rawColumn, metric) {
       fulfilled.add(requestKey(site, index, range));
-      const {label, unit} = axes[index];
+      const {label: variableLabel, unit} = axes[index];
+      const label = dailyLabels[metric] || variableLabel;
       const raw = Boolean(rawColumn);
       const kind = raw ? "FLUXNET 半小时" : "质控逐小时 DAT";
       const record = rawIndex[site];
       const source = raw ? record.source : paths.get(site);
       const gaps = [];
       let min = Infinity, max = -Infinity, sum = 0;
+      const step = metric ? dayMs : raw ? 1800000 : 3600000;
       points.forEach(([time, value], i) => {
         min = Math.min(min, value);
         max = Math.max(max, value);
         sum += value;
-        if (i && time - points[i - 1][0] > (raw ? 1800000 : 3600000)) gaps.push([stamp(points[i - 1][0]), stamp(time)]);
+        if (i && time - points[i - 1][0] > step) gaps.push([stamp(points[i - 1][0]), stamp(time)]);
       });
       stats.push({site, label, unit, kind, column: rawColumn || query[index].key,
+        ...(metric && {daily_metric: metric}),
         ...(raw && {citation: record.citation, source_url: record.url}),
         start: stamp(points[0][0]), end: stamp(points.at(-1)[0]), count: points.length,
         min, max, mean: Number((sum / points.length).toFixed(4)), sum: Number(sum.toFixed(4)), source});
-      const legend = [stationIds.length > 1 && site, query.length > 1 && label,
+      const legend = [stationIds.length > 1 && site, (metric || query.length > 1) && label,
         ranges.length > 1 && range.label, raw ? rawColumn : plan.raw ? "DAT" : ""].filter(Boolean).join(" · ") || site;
       series.push({site, legend, index, kind, mark: plan.mark || (plan.dual_axis && query[index].key === "precip" ? "bar" : "line"),
         points: thin(points).map(([time, value]) => [stamp(time), value]), gaps});
+    }
+
+    function addObservations(site, index, range, points, rawColumn) {
+      if (!plan.daily.length) {
+        addSeries(site, index, range, points, rawColumn);
+        return;
+      }
+      const days = dailyExtrema(points);
+      for (const metric of plan.daily) {
+        const values = days.map(([day, bounds]) =>
+          [day, metric === "range" ? Number((bounds.max - bounds.min).toFixed(8)) : bounds[metric]]);
+        addSeries(site, index, range, values, rawColumn, metric);
+      }
     }
 
     for (const site of stationIds) {
@@ -433,7 +485,7 @@ export const fluxPublic = (() => {
           dat.filter(row => row[columnIndex] !== null).map(row => [row[0], row[columnIndex]]) : [];
         for (const range of ranges) {
           const points = within(datPoints, range);
-          if (points.length) addSeries(site, index, range, points);
+          if (points.length) addObservations(site, index, range, points);
           else if (plan.raw && !plan.raw_only) notices.push(site + " " + axes[index].label + " " + range.label + " 没有有效的 DAT 数据。");
           if (plan.raw || item.column || !points.length) jobs.push({index, item, range});
         }
@@ -451,21 +503,22 @@ export const fluxPublic = (() => {
           const points = within(raw.get(name), range);
           if (points.length) { selected = name; values = points; break; }
         }
-        if (selected) addSeries(site, index, range, values, selected);
+        if (selected) addObservations(site, index, range, values, selected);
         else notices.push(site + " " + (item.column || axes[index].label) + " " + range.label +
           (names.length ? " 的 FLUXNET 半小时数据无有效值。" : " 在原始 CSV 中没有匹配的字段。"));
       }
     }
-    const makeChart = (items, indexes) => ({label: indexes.map(index => axes[index].label).join(" / "),
+    const makeChart = (items, indexes) => ({label: plan.daily.length ? "逐日气温统计" : indexes.map(index => axes[index].label).join(" / "),
       unit: indexes.length === 1 ? axes[indexes[0]].unit : "", kind: [...new Set(items.map(item => item.kind))].join(" + ") + " · UTC",
       axes: indexes.map(index => axes[index]), month_aligned: plan.month_aligned && ranges.length > 1,
       series: items.map(item => ({...item, axis: indexes.indexOf(item.index)}))});
     const available = query.map((_, index) => index).filter(index => series.some(item => item.index === index));
     const charts = plan.plot && series.length ? plan.dual_axis && available.length === 2 ? [makeChart(series, available)] :
       available.map(index => makeChart(series.filter(item => item.index === index), [index])) : [];
-    const report = stats.map(s => "- " + s.site + " · " + s.label + " · " + s.kind + "（" + s.column + "） · " + s.start + " 至 " + s.end +
+    const report = stats.map(s => "- " + s.site + " · " + s.label + " · " + s.start + " 至 " + s.end +
       "（UTC），" + s.count + " 条。最小 " + s.min + "、平均 " + s.mean + "、最大 " + s.max + (s.unit ? " " + s.unit : "") +
-      (s.label === "降水" && s.unit ? "，累计 " + s.sum + " mm" : "") + "。来源：" + s.source);
+      (s.label === "降水" && s.unit ? "，累计 " + s.sum + " mm" : "") + "。");
+    const sources = [...new Set(stats.map(({kind, source}) => kind + " " + source.split("/").at(-1)))];
     const attribution = [...new Set(stats.filter(s => s.citation).map(s => s.site))].map(site => {
       const {citation, url, license} = rawIndex[site];
       return "[" + citation + "](" + url + ") · " + license + "。数据按年分片，半小时时间按站点时区换算为 UTC。";
@@ -477,9 +530,12 @@ export const fluxPublic = (() => {
       availability ||= JSON.parse(await read('./data/availability.json', signal));
       stationData = missingSites.map(site => stationAvailability(site, catalog, availability));
     }
-    return {text: [...notices, report.join("\n"), ...attribution].filter(Boolean).join("\n\n"), chart: charts[0], other_charts: charts.slice(1),
+    const dailyMethod = plan.daily.length && stats.length ?
+      "按 UTC 日期对有效气温记录取日最高值、日最低值，日较差为两者之差。" : "";
+    return {text: [dailyMethod, ...notices, report.join("\n")].filter(Boolean).join("\n\n"), chart: charts[0], other_charts: charts.slice(1),
+      source_text: sources.length ? ["**数据来源**　" + sources.join("、") + "。", ...attribution].join("\n\n") : "",
       availability_text: formatAvailability(stationData),
-      evidence: {stats, notices, station_availability: stationData.map(({site_id, name, sources}) => ({site_id, name,
+      evidence: {stats, notices, ...(dailyMethod && {daily_method: dailyMethod}), station_availability: stationData.map(({site_id, name, sources}) => ({site_id, name,
         sources: Object.fromEntries(Object.entries(sources).map(([kind, source]) => [kind, {
           source: source.source, valid_variables: Object.keys(source.columns),
           start: Object.values(source.columns).map(column => column.start).sort()[0],
@@ -606,14 +662,28 @@ export const fluxPublic = (() => {
         {response_format: {type: "json_object"}, reasoning_effort: "low", max_tokens: 2400});
         const proposed = JSON.parse(output.replace(/^\s*(?:\x60{3}|~{3})(?:json)?\s*|\s*(?:\x60{3}|~{3})\s*$/gi, ""));
         if (!["catalog","map","series"].includes(proposed?.tool)) throw new Error("查询计划缺少有效操作。");
-        if (proposed.tool === "series") {
-          if (columns.length) proposed.columns = columns;
-          if (plan.raw) {
-            proposed.raw = true;
-            proposed.raw_only = plan.raw_only;
-          }
+        const explicitPlot = plan.tool === "series" && plan.plot && sites.length &&
+          (plan.variables.length || columns.length);
+        const planned = normalize(proposed);
+        if (plan.tool === "series" && plan.daily?.length) {
+          if (!plan.sites.length && planned.tool === "series") plan.sites = planned.sites;
+          if (!plan.periods.length && planned.tool === "series") plan.periods = planned.periods;
+        } else if (planned.tool === "series") {
+          const requestedColumns = plan.columns || [];
+          const requestedVariables = plan.variables || [];
+          const hasDatVariable = requestedVariables.some(key => Object.hasOwn(variables, key));
+          plan = {...planned,
+            sites: sites.length ? sites : planned.sites.length ? planned.sites : plan.sites,
+            periods: explicitPlot && plan.periods.length ? plan.periods : planned.periods.length ? planned.periods : plan.periods,
+            variables: explicitPlot ? requestedVariables : [...new Set([...planned.variables, ...requestedVariables])],
+            columns: requestedColumns.length || hasDatVariable ? requestedColumns : planned.columns,
+            plot: planned.plot || plan.plot,
+            raw: plan.raw,
+            raw_only: plan.raw_only,
+          };
+        } else if (!explicitPlot) {
+          plan = planned;
         }
-        plan = proposed;
       } catch (error) {
         signal.throwIfAborted();
         modelError = error.message;
@@ -649,8 +719,9 @@ export const fluxPublic = (() => {
         modelError = error.message;
       }
     }
-    const {evidence, availability_text, ...reply} = result;
+    const {evidence, availability_text, source_text, ...reply} = result;
     if (availability_text) summary += '\n\n' + availability_text;
+    if (source_text) summary += '\n\n' + source_text;
     return {...reply, summary, model_used: modelUsed, model_error: modelError,
       context: {publicPlan: plan, publicQuestion: question}};
   }

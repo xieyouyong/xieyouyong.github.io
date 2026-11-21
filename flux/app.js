@@ -1,4 +1,4 @@
-import {fluxPublic} from "./public-data.js?v=5";
+import {fluxPublic} from "./public-data.js?v=7";
 import {bindModelDialog} from "../assets/model-dialog.js?v=3";
 
 const form = document.querySelector("#ask");
@@ -129,7 +129,8 @@ function renderChart(chart, parent) {
   figure.append(canvas, caption, download);
   parent.append(figure);
   let hover = null;
-  const columns = width => Math.max(1, Math.floor((width - 32) / 105));
+  const legendWidth = Math.max(105, ...lines.map(line => 31 + line.site.length * 9));
+  const columns = width => Math.max(1, Math.floor((width - 32) / legendWidth));
   const legendHeight = width => Math.ceil(lines.length / columns(width)) * 17;
 
   function paint(target, w, h, ratio, pointer = null) {
@@ -144,7 +145,7 @@ function renderChart(chart, parent) {
     ctx.fillText(title, 16, 24, w - 32);
     ctx.font = "12px system-ui";
     lines.forEach((line, i) => {
-      const x = 16 + i % columns(w) * 105;
+      const x = 16 + i % columns(w) * legendWidth;
       const y = 43 + Math.floor(i / columns(w)) * 17;
       ctx.strokeStyle = line.color;
       ctx.lineWidth = 2;
