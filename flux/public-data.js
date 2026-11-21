@@ -730,17 +730,8 @@ export const fluxPublic = (() => {
     await load();
     const station = catalog.find(row => row.id === id);
     if (!station) throw new Error("站点目录中没有此站。");
-    availability ||= JSON.parse(await read("./data/availability.json"));
-    const published = Object.entries(availability.sites[id] || {}).flatMap(([kind, source]) => {
-      const columns = Object.values(source.columns);
-      if (!columns.length) return [];
-      const start = columns.map(column => column.start).sort()[0];
-      const end = columns.map(column => column.end).sort().at(-1);
-      return [{label: kind === "dat" ? "DAT 有效跨度" : "原始 CSV 有效跨度",
-        value: start.replace("T", " ") + " 至 " + end.replace("T", " ") + "（UTC）"}];
-    });
-    return {longitude: station.longitude, latitude: station.latitude, published,
-      catalogSpan: station.source_done || station.source_all};
+    const {longitude, latitude, igbp, source_done} = station;
+    return {id, longitude, latitude, igbp, source_done};
   }
 
   return {ask, connect, load, mapStationDetails};

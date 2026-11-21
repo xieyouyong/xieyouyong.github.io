@@ -1,4 +1,4 @@
-import {fluxPublic} from "./public-data.js?v=8";
+import {fluxPublic} from "./public-data.js?v=9";
 import {bindModelDialog} from "../assets/model-dialog.js?v=3";
 
 const form = document.querySelector("#ask");
@@ -289,9 +289,24 @@ function renderStationMap(map, parent) {
   caption.append(document.createElement("br"));
   const stationInfo = document.createElement("span");
   stationInfo.setAttribute("aria-live", "polite");
-  stationInfo.textContent = "点击站点或其附近查看数据跨度。";
+  stationInfo.textContent = "点击站点或其附近查看站点信息。";
   caption.append(stationInfo);
-  figure.append(canvas, caption, download);
+  const stationTable = document.createElement("div");
+  stationTable.className = "markdown-table";
+  stationTable.hidden = true;
+  const table = document.createElement("table");
+  table.setAttribute("aria-label", "所选通量站点信息");
+  const headers = table.createTHead().insertRow();
+  for (const label of ["SITE_ID", "经度（°）", "纬度（°）", "植被类型（IGBP）", "数据跨度（SOURCE_DONE）"]) {
+    const header = document.createElement("th");
+    header.scope = "col";
+    header.textContent = label;
+    headers.append(header);
+  }
+  const stationRow = table.createTBody().insertRow();
+  const stationCells = Array.from({length: headers.cells.length}, () => stationRow.insertCell());
+  stationTable.append(table);
+  figure.append(canvas, caption, stationTable, download);
   parent.append(figure);
 
   function paint(target, width, height, ratio) {
@@ -410,16 +425,17 @@ function renderStationMap(map, parent) {
     if (!nearest) return;
     selectedId = nearest;
     draw();
+    stationTable.hidden = true;
     stationInfo.textContent = "SITE_ID：" + nearest + " · 正在读取站点信息…";
     try {
       const station = await fluxPublic.mapStationDetails(nearest);
       if (selectedId !== nearest) return;
-      const spans = station.published.length ? station.published :
-        [{label: "目录登记跨度", value: station.catalogSpan || "未记录"}];
-      stationInfo.textContent = "SITE_ID：" + nearest + " · 经度 " + station.longitude + "° · 纬度 " + station.latitude + "°";
-      for (const {label, value} of spans) {
-        stationInfo.append(document.createElement("br"), label + "：" + value);
-      }
+      const values = [station.id, station.longitude, station.latitude, station.igbp, station.source_done];
+      values.forEach((value, index) => {
+        stationCells[index].textContent = value == null || value === "" ? "未记录" : String(value);
+      });
+      stationTable.hidden = false;
+      stationInfo.textContent = "";
     } catch {
       if (selectedId === nearest) stationInfo.textContent = "SITE_ID：" + nearest + " · 站点信息读取失败，请重试。";
     }
